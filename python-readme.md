@@ -39,7 +39,7 @@ conda create -n "MIE444-Project"
 
 4. Activate your conda environment:
 ```bash
-conda activate -n "MIE444-Project"
+conda activate "MIE444-Project"
 ```
 
 5. Install [pip](https://realpython.com/what-is-pip/) package/library management tool:
