@@ -37,7 +37,7 @@ conda --version
 conda create -n "MIE444-Project"
 ```
 
-4. Activate your conda environment:
+4. Activate your conda environment (note that this makes the conda environment "active" and available in the current command line session, ie. you will have to re-activate the environment for every Command Prompt window you open):
 ```bash
 conda activate "MIE444-Project"
 ```
