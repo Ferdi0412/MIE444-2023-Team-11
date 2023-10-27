@@ -20,6 +20,35 @@ import pygame
 pygame.__version__ >= '2.5.0'
 ```
 
+# Recommendation (Zero MQ)
+I (Ferdi) recommend using a library called [Zero MQ (zmq)](https://zeromq.org/) when making several python processes/programs run simultaneously, for communication between each other.
+<br>It has extensive support, and is easy to use in [Python](https://zeromq.org/languages/python/). Highly recommend checking it out!
+```bash
+pip install zmq
+```
+The basic connection types are the Requestor-Replier (zmq.REQ, zmq.REP) types. Here, severl requestors can connect to a single replier.
+```python
+import zmq
+
+## Setting up a Replier/Receiver type connection
+context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.bind("tcp://*3000")
+
+msg = socket.recv()
+print(f"Received message: {msg}") ## eg. "Received message: Hello World"
+socket.send("Response!")
+
+## Setting up a Requestor/Sender/Client type connection
+context = zmq.Context()
+socket = context.socket(zmq.REQ)
+socket.connect("tcp://localhost:3000")
+
+socket.send(b"Hello World")
+msg = socket.recv()
+print(f"Responded with: {msg}") ## eg. "Responded with: Response!"
+```
+
 # Recommendation (Miniconda)
 I (Ferdi) recommend setting up a conda environment, as I find this easier to use, especially if you want several projects on the same computer. An environment is essentially an isolated "setup", and conda is a tool for controlling python enironments.
 <br><br>There are several versions of conda, notably Miniconda and Anaconda. Anaconda is big and comes with many tools, whilst Miniconda solely provides command-line access to conda.
