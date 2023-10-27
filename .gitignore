@@ -1,0 +1,2 @@
+# Do not commit anything prefixed with priv_
+priv_*
