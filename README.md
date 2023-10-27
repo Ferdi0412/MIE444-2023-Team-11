@@ -8,6 +8,7 @@ Team 11 repository for MIE444 project, 2023.
 - Ferdinand Tonby-Strandborg
 
 # To Do
+[Note] Edit this through GitHub.vom, to prevent conflicts.
 ## Milestone 1
 - **Motor**
 - [ ] Get arduino to control 4 motors
