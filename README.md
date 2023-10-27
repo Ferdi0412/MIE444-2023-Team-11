@@ -38,6 +38,13 @@ Team 11 repository for MIE444 project, 2023.
 - [ ] Setup input detection (W, A, S, D, Q, E)
 - [ ] Setup wall "history" view
 
+# Architecture
+Makibg a robot to navigate a maze. We are currently using:
+- An ESP32 for bluetooth and "master" control
+- An arduino connected to 6 Ultrasonic sensors and a Gyroscope, for detection
+- An arduino connected to 4 DC motors and 2 Servo motors for motion
+- Another ESP32 for "computer control" side - to overcome issues in connectibg computer bluetooth to robot
+
 # Using Git
 <br>**[Aside] Breifly, what is Git?**
 <br>Git is a version control tool that shows changes to the files contained inside *repositories*.
