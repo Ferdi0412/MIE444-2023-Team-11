@@ -8,7 +8,7 @@ Team 11 repository for MIE444 project, 2023.
 - Ferdinand Tonby-Strandborg
 
 # To Do
-[Note] Edit this through [GitHub.com](https://github.com/Ferdi0412/MIE444-2023-Team-11/blob/main/README.md), to prevent conflicts.
+[Note] Edit this directly in [GitHub](https://github.com/Ferdi0412/MIE444-2023-Team-11/blob/main/README.md), to prevent conflicts.
 ## Milestone 1
 - **Motor**
 - [ ] Get arduino to control 4 motors
