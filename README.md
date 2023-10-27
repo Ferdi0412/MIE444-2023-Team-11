@@ -31,7 +31,10 @@ Team 11 repository for MIE444 project, 2023.
 - [ ] Setup bluetooth "node", exposing data in socket on comouter
 - [ ] Setup "master" logic for where to accept control inputs (from control software, or from manual input)
 - **Control Software**
+- [x] Figure out API
 - [ ] Setup control logic
+- [ ] Make work with simmer.py
+- [ ] Make work with robot
 - **Visualization**
 - [ ] Setup visual for motor relative to current ultrasonic walls
 - [ ] Setup wheel speed motion representation
