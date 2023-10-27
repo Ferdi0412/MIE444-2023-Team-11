@@ -3,13 +3,13 @@ Team 11 repository for MIE444 project, 2023
 
 # To Do
 ## Milestone 1
-- Motor
+- **Motor**
 - [ ] Get arduino to control 4 motors
 - [ ] Setup "emergency stop" logic
 - [ ] Enable "progress" to be returned
 - [ ] Attach to wheels, robot
 - [ ] Callibrate motion
-- Sensor
+- **Sensor**
 - [ ] Get arduino to control Ultrasonic Sensors
 - [ ] Calibrate US sensors for distance
 - [ ] Get arduino to control Gyroscope
@@ -17,15 +17,15 @@ Team 11 repository for MIE444 project, 2023
 - [ ] Attach to robot
 - [ ] Declare "emergency stop" logic
 - [ ] Define "direction block" logic
-- Robot Bluetooth
+- **Robot Bluetooth**
 - [ ] Setup ESP32 to communicate over bluetooth
 - [ ] Setup pass-along logic to pass messagea to Arduinos
-- Bluetooth Node
+- **Bluetooth Node**
 - [ ] Setup bluetooth "node", exposing data in socket on comouter
 - [ ] Setup "master" logic for where to accept control inputs (from control software, or from manual input)
-- Control Software
+- **Control Software**
 - [ ] Setup control logic
-- Visualization
+- **Visualization**
 - [ ] Setup visual for motor relative to current ultrasonic walls
 - [ ] Setup wheel speed motion representation
 - [ ] Setup input detection (W, A, S, D, Q, E)
