@@ -12,11 +12,11 @@ with open(os.path.join(os.path.dirname(__file__), 'bt-config.yaml'), 'r') as cfg
 
 MAC_ADDR = cfg['mac-address']
 
-PORT = 30 # cfg['port']
+PORT = 1 # cfg['port']
 
-bt_available = {name: addr for addr, name in bt.discover_devices(lookup_names=True)}
+# bt_available = {name: addr for addr, name in bt.discover_devices(lookup_names=True)}
 
-print(bt_available)
+# print(bt_available)
 
 ###########################
 ###      BT SERVER      ###

@@ -14,9 +14,9 @@ with open(cfg_dir, 'r') as cfg_file:
     cfg = yaml.safe_load(cfg_file)
 
 
-MAC_ADDRESS = cfg['MAC-ADDRESS']
+MAC_ADDRESS = cfg['mac-address']
 
-CHANNEL = 2
+CHANNEL = 1
 
 assert len(MAC_ADDRESS) == 17 and MAC_ADDRESS.count(':') == 5
 
