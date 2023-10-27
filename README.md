@@ -48,3 +48,6 @@ As you update files in your **local repository**, you will see changes appear in
 <br>To **push**, press **Repository > Push** in the GitHub Desktop.
 <br>![GitHub Desktop Post Commit](https://github.com/Ferdi0412/MIE444-2023-Team-11/assets/78992348/61c72c6c-7e32-48af-9a6a-755ec3b0c0f7)
 *Image showing Rpository tab in header*.
+
+# Simmer
+The simmer-python-main sub-directory is derived from the [simmer](https://github.com/ian612/simmer-python) repository by [Ian Bennett](https://github.com/ian612).
