@@ -1,5 +1,52 @@
 # MIE444-2023-Team-11
-Team 11 repository for MIE444 project, 2023
+Team 11 repository for MIE444 project, 2023.
+
+## Team Members
+- Emma Day
+- Nate Lansil
+- Jeff Guo
+- Ferdinand Tonby-Strandborg
+
+# To Do
+[Note] Edit this directly in [GitHub](https://github.com/Ferdi0412/MIE444-2023-Team-11/blob/main/README.md), to prevent conflicts.
+## Milestone 1
+- **Motor**
+- [ ] Get arduino to control 4 motors
+- [ ] Setup "emergency stop" logic
+- [ ] Enable "progress" to be returned
+- [ ] Attach to wheels, robot
+- [ ] Callibrate motion
+- **Sensor**
+- [ ] Get arduino to control Ultrasonic Sensors
+- [ ] Calibrate US sensors for distance
+- [ ] Get arduino to control Gyroscope
+- [ ] Calibrate Gyro for accel
+- [ ] Attach to robot
+- [ ] Declare "emergency stop" logic
+- [ ] Define "direction block" logic
+- **Robot Bluetooth**
+- [ ] Setup ESP32 to communicate over bluetooth
+- [ ] Setup pass-along logic to pass messagea to Arduinos
+- **Bluetooth Node**
+- [ ] Setup bluetooth "node", exposing data in socket on comouter
+- [ ] Setup "master" logic for where to accept control inputs (from control software, or from manual input)
+- **Control Software**
+- [x] Figure out API
+- [ ] Setup control logic
+- [ ] Make work with simmer.py
+- [ ] Make work with robot
+- **Visualization**
+- [ ] Setup visual for motor relative to current ultrasonic walls
+- [ ] Setup wheel speed motion representation
+- [ ] Setup input detection (W, A, S, D, Q, E)
+- [ ] Setup wall "history" view
+
+# Architecture
+Makibg a robot to navigate a maze. We are currently using:
+- An ESP32 for bluetooth and "master" control
+- An arduino connected to 6 Ultrasonic sensors and a Gyroscope, for detection
+- An arduino connected to 4 DC motors and 2 Servo motors for motion
+- Another ESP32 for "computer control" side - to overcome issues in connectibg computer bluetooth to robot
 
 # Using Git
 <br>**[Aside] Breifly, what is Git?**
