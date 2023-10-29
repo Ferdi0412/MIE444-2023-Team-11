@@ -1,0 +1,21 @@
+interface-port: 3001
+
+simmer-sensors:
+  us:
+    - u0
+    - u1
+    - u2
+    - u3
+    - u5
+  comp: c1
+  gyro: g1
+
+simmer-to-act:
+  u0: '0'
+  u1: '1'
+  u2: '2'
+  u3: '3'
+  u4: '4'
+  u5: '5'
+  c1: c
+  g1: g
