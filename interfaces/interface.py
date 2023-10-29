@@ -33,7 +33,14 @@ class RobotContol:
     def send_recv(self, message: str):
         try:
             self._socket.send(message.encode('utf-8'))
-            return json.loads(self._socket.recv().decode('utf-8'))
+            res = self._socket.recv().decode('utf-8')
+
+            ## TODO: Fix following round-about way to avoid decoding stuff like 'nan'
+            try:
+                return json.loads(res)
+
+            except json.decoder.JSONDecodeError:
+                return res
 
         except zmq.Again as exc:
             raise RobotTimeout from exc

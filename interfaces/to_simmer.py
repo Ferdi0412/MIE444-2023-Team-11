@@ -15,6 +15,8 @@ import _thread
 
 import math
 
+from threading import Thread
+
 ### Network Setup ###
 HOST = '127.0.0.1'  # The server's hostname or IP address
 PORT_TX = 61200     # The port used by the *CLIENT* to receive
@@ -158,31 +160,58 @@ def translate(msg: str) -> str:
 
 ##############
 ##   MAIN   ##
+def setup(context: zmq.Context = None) -> zmq.Socket:
+    """Sets up socket for connections."""
+    context = context or zmq.Context()
+    interface = context.socket(zmq.REP)
+    interface.setsockopt(zmq.RCVTIMEO, 1_000)
+    interface.bind(f"tcp://*:{PORT}")
+    return interface
+
+def main_loop(interface: zmq.Socket) -> None:
+    """Main loop..."""
+    try:
+        message = interface.recv()
+        print(f"\n[Simmer-connection]\n|- Received message: {message}")
+        try:
+            response = translate(message.decode('utf-8'))
+            print(f"|- Response returned: {response}\n")
+            interface.send(response.encode('utf-8'))
+
+        except NoConnection:
+            print("|- [NoConnection]")
+            interface.send(b'NO-CONNECTION')
+
+        except TranslationError:
+            interface.send(b"NOT-SUPPORTED")
+
+        except:
+            interface.send(b'FATAL-ERROR')
+
+        else:
+            print('[~]', end='\n\n')
+
+    except zmq.Again:
+        pass ## Timeout on recv call, to allow KeyboardInterrupt...
+
+
+## Run the main loop if running directly
 if __name__ == '__main__':
     context = zmq.Context()
-    interface = context.socket(zmq.REP)
-    interface.setsockopt(zmq.RCVTIMEO, 1000)
-    interface.bind(F"tcp://*:{PORT}")
+    interface = setup(context)
 
     print("Ready to accept messages!")
+
     while True:
-        try:
-            message = interface.recv()
-            print(f"Received message: {message}")
-            try:
-                response = translate(message.decode('utf-8'))
-                print(f"|- Response returned: {response}\n")
-                interface.send(response.encode('utf-8'))
+        main_loop(interface)
 
-            except NoConnection as exc:
-                print("|- [NoConnection]")
-                interface.send(b'NO-CONNECTION')
+## For importing
+class SimmerConnection:
+    def __init__(self):
+        self._socket = setup()
+        self._started = False
 
-            except TranslationError:
-                interface.send(b"NOT-SUPPORTED")
-
-            except:
-                interface.send(b'FATAL-ERROR')
-
-        except zmq.Again:
-            pass ## Timeout on recv call, to allow KeyboardInterrupt...
+    def start(self):
+        if not self._started:
+            Thread(target = lambda: main_loop(self._socket), daemon=True).start()
+            self._started = True

@@ -3,7 +3,12 @@
 Import the **RobotContol** class from *interface.py*. You must run the **.connect()** function in order to use it, then use the **.send_recv(...)** message to communicate.
 
 ```python
+## From this directory
 from interface import RobotControl, RobotTimeout
+
+## From parent/main directory
+from interfaces import RobotControl, RobotTimeout
+# NOTE: interfaces is made available by the __init__.py file in this directory.
 
 robot = RobotControl()
 
@@ -35,6 +40,20 @@ if response == 'FATAL-ERROR':
     notify_ferdi()
     ...
 
+```
+
+
+## Simmer
+To work with simmer, you should run **to_simmer.py** before running anything that uses the interface function(s)
+There is a class intended to work externally, however there are currently issues with this...
+```python
+## From this directory
+from to_simmer import SimmerConnection
+
+## From main/parent directory
+from interfaces import SimmerConnection
+
+SimmerConnection().start()
 ```
 
 # API:
