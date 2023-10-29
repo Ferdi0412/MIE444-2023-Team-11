@@ -105,4 +105,4 @@ To make it easier to code, all command messages will start with 1 byte indicatin
 | US-ALL        |  0x20                |
 | G             |  0x30                |
 | C             |  0x40                |
-| US-1          |  0x21 -> 2nd 4 bits for {*id*}                |
+| US1          |  0x21 -> 2nd 4 bits for {*id*}                |
