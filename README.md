@@ -7,6 +7,8 @@ Team 11 repository for MIE444 project, 2023.
 - Jeff Guo
 - Ferdinand Tonby-Strandborg
 
+### Python stuff:
+See [python-readme](https://github.com/Ferdi0412/MIE444-2023-Team-11/blob/main/python-readme.md).
 # To Do
 [Note] Edit this directly in [GitHub](https://github.com/Ferdi0412/MIE444-2023-Team-11/blob/main/README.md), to prevent conflicts.
 ## Milestone 1
