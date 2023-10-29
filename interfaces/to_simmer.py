@@ -7,7 +7,7 @@ import os, sys
 ## Allow files in this directory to be used...
 sys.path.append(os.path.dirname(__file__))
 
-from get_config import get_config
+from get_config import get_config, setup
 
 import socket
 import struct
@@ -160,14 +160,6 @@ def translate(msg: str) -> str:
 
 ##############
 ##   MAIN   ##
-def setup(context: zmq.Context = None) -> zmq.Socket:
-    """Sets up socket for connections."""
-    context = context or zmq.Context()
-    interface = context.socket(zmq.REP)
-    interface.setsockopt(zmq.RCVTIMEO, 1_000)
-    interface.bind(f"tcp://*:{PORT}")
-    return interface
-
 def main_loop(interface: zmq.Socket) -> None:
     """Main loop..."""
     try:

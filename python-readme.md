@@ -24,13 +24,16 @@ pygame.__version__ >= '2.5.0'
 To interface with the robot, you need the following libraries:
 - [PyYaml](https://github.com/yaml/pyyaml)
 - [ZeroMQ](https://zeromq.org/)
+- [PySerial](https://pyserial.readthedocs.io/en/latest/pyserial.html)
 <br>**Installation:**
 ```bash
-pip install pyyaml pyzmq
+pip install pyyaml pyzmq pyserial
 ```
 <br>**Importing:*
 ```python
-
+import yaml
+import zmq
+import serial
 ```
 
 # Recommendation (Zero MQ)
