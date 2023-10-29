@@ -20,6 +20,19 @@ import pygame
 pygame.__version__ >= '2.5.0'
 ```
 
+# Robot Control Requirements
+To interface with the robot, you need the following libraries:
+- [PyYaml](https://github.com/yaml/pyyaml)
+- [ZeroMQ](https://zeromq.org/)
+<br>**Installation:**
+```bash
+pip install pyyaml pyzmq
+```
+<br>**Importing:*
+```python
+
+```
+
 # Recommendation (Zero MQ)
 I (Ferdi) recommend using a library called [Zero MQ (zmq)](https://zeromq.org/) when making several python processes/programs run simultaneously, for communication between each other.
 <br>It has extensive support, and is easy to use, and has many [Python examples](https://zeromq.org/languages/python/). Highly recommend checking it out!
