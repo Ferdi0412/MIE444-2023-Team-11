@@ -49,10 +49,18 @@ robot_start_rotation = 180      # Robot starting rotation (deg)
 robot_width = 6                 # Robot width in inches
 robot_height = 6                # Robot height in inches
 robot_outline = [               # Robot outline, relative to center position
-                pm.Vector2(-robot_width/2, -robot_width/2),
-                pm.Vector2(-robot_width/2,  robot_width/2),
-                pm.Vector2( robot_width/2,  robot_width/2),
-                pm.Vector2( robot_width/2, -robot_width/2)
+                pm.Vector2(1.24, 3),
+                pm.Vector2(3,  1.24),
+                pm.Vector2(4.5, 1.24),
+                pm.Vector2(4.5, -1.24),
+                pm.Vector2(3, -1.24),
+                pm.Vector2(1.24, -3),
+                pm.Vector2(-1.24, -3),
+                pm.Vector2(-3, -1.24),
+                pm.Vector2(-4.5, -1.24),
+                pm.Vector2(-4.5, 1.24),
+                pm.Vector2(-3,  1.24),
+                pm.Vector2(-1.24, 3)
                 ]
 
 # Maze definition information
@@ -149,9 +157,9 @@ drives = {
 }
 
 # Sensors
-u0_info = {
-    'id': 'u0',
-    'position': [0, 3],
+u1_info = {
+    'id': 'u1',
+    'position': [-1.2, 2.58],
     'height': 2,
     'rotation': 0,
     'error': 0.02,
@@ -165,9 +173,9 @@ u0_info = {
     'visible_measurement': True
 }
 
-u1_info = {
-    'id': 'u1',
-    'position': [0, 1],
+u2_info = {
+    'id': 'u2',
+    'position': [1.2, 2.58],
     'height': 4,
     'rotation': 0,
     'error': 0.02,
@@ -181,47 +189,63 @@ u1_info = {
     'visible_measurement': True
 }
 
-g0_info = {
-    'id': 'u0',
-    'position': [0, 0],
-    'rotation': 0,
+u3_info = {
+    'id': 'u3',
+    'position': [2.97, 0],
+    'height': 4,
+    'rotation': 270,
     'error': 0.02,
-    'bias': 0.1,
-    'visible': False
+    'outline': [
+        pm.Vector2(-1, -0.5),
+        pm.Vector2(-1, 0.5),
+        pm.Vector2(1, 0.5),
+        pm.Vector2(1, -0.5)
+    ],
+    'visible': True,
+    'visible_measurement': True
 }
 
-c0_info = {
-    'id': 'c0',
-    'position': [0, 0],
-    'rotation': 0,
+u4_info = {
+    'id': 'u4',
+    'position': [0, -2.97],
+    'height': 4,
+    'rotation': 180,
     'error': 0.02,
-    'bias': 0.1,
-    'visible': False
+    'outline': [
+        pm.Vector2(-1, -0.5),
+        pm.Vector2(-1, 0.5),
+        pm.Vector2(1, 0.5),
+        pm.Vector2(1, -0.5)
+    ],
+    'visible': True,
+    'visible_measurement': True
 }
 
-i0_info = {
-    'id': 'i0',
-    'position': [0, -1],
-    'height': 1.5,
-    'rotation': 0,
-    'fov': 60,
-    'threshold': 0.7,
-    'error': 0.05,
-    'bias': 0.1,
-    'color': (127, 127, 127),
+u5_info = {
+    'id': 'u5',
+    'position': [-2.97, 0],
+    'height': 4,
+    'rotation': 90,
+    'error': 0.02,
+    'outline': [
+        pm.Vector2(-1, -0.5),
+        pm.Vector2(-1, 0.5),
+        pm.Vector2(1, 0.5),
+        pm.Vector2(1, -0.5)
+    ],
     'visible': True,
     'visible_measurement': True
 }
 
 sensors = {
-    'u0': Ultrasonic(u0_info),
     'u1': Ultrasonic(u1_info),
-    'g0': Gyroscope(g0_info),
-    'c0': Compass(c0_info),
-    'i0': Infrared(i0_info)
+    'u2': Ultrasonic(u2_info),
+    'u3': Ultrasonic(u3_info),
+    'u4': Ultrasonic(u4_info),
+    'u5': Ultrasonic(u5_info),
 }
 
 
 
 ### TESTING AND DEBUG SETTINGS ###
-# simulate_list = ['u0', 'u1', 'i0']
+simulate_list = ['u1', 'u2', 'u3', 'u4', 'u5']

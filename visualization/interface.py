@@ -1,5 +1,7 @@
 import os, sys; sys.path.append(os.path.dirname(__file__));
 
+from simmer_functions import *
+
 import pygame
 import yaml
 import time
@@ -49,7 +51,7 @@ class UltrasonicSensor:
         self._rotation: Number = math.radians(params['rotation'])
         self._steps: int       = (params.get('steps', 6) // 2)
         self._angle: float     = (math.radians(params.get('angle', 5)) / (2 * self._steps ))
-        self._buffer_len: int  = params.get('buffer-len', 10)
+        self._buffer_len: int  = params.get('buffer-len', 20)
         self._buffer: list     = [1] * self._buffer_len
         self._draw_mean: bool  = params.get('draw_mean', False)
 
@@ -93,22 +95,22 @@ while True:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_w:
-                pass ## Forward
+                forward()
 
             if event.key == pygame.K_s:
-                pass ## Backwards
+                backward()
 
             if event.key == pygame.K_a:
-                pass ## Left
+                left()
 
             if event.key == pygame.K_d:
-                pass ## Right
+                right()
 
             if event.key == pygame.K_q:
-                pass ## Counter clockwise
+                clockwise()
 
             if event.key == pygame.K_e:
-                pass ## Clockwise
+                counterclockwise()
 
     # Clear the screen with the background color
     screen.fill(bg_col)
@@ -118,7 +120,9 @@ while True:
     pygame.draw.polygon(screen, robot_col, robot_outline, 0)
 
     # Draw ultrasonic sensor representations
-    for us in ultrasonics.values():
+    newest_readings = get_ultrasonics()
+    for i, us in enumerate(ultrasonics.values()):
+        us.append(newest_readings[i])
         us.draw()
 
     # Update the display

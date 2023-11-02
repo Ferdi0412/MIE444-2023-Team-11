@@ -1,7 +1,7 @@
 ## Sizing the screen/display
 screen-width: 1200
 screen-height: 800
-pixel-scale: 50
+pixel-scale: 8
 
 ## Main colors
 background-color: [50, 50, 50]
@@ -19,10 +19,14 @@ average-draw-sz:  1
 robot-outline:
   - [ 1.24, 3 ]
   - [ 3, 1.24 ]
+  - [ 4.5, 1.24]
+  - [4.5, -1.24]
   - [ 3, -1.24 ]
   - [ 1.24, -3 ]
   - [ -1.24, -3 ]
   - [ -3, -1.24 ]
+  - [-4.5, -1.24]
+  - [-4.5, 1.24]
   - [ -3, 1.24 ]
   - [ -1.24, 3 ]
 
