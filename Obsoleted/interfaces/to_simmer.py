@@ -190,7 +190,7 @@ def main_loop(interface: zmq.Socket) -> None:
 ## Run the main loop if running directly
 if __name__ == '__main__':
     context = zmq.Context()
-    interface = setup(context)
+    interface = setup(PORT, context)
 
     print("Ready to accept messages!")
 

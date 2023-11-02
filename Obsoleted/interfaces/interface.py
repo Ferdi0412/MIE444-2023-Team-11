@@ -44,3 +44,14 @@ class RobotContol:
 
         except zmq.Again as exc:
             raise RobotTimeout from exc
+
+
+if __name__ == '__main__':
+    robot = RobotContol().connect()
+
+    while True:
+        try:
+            response = robot.send_recv(input("Type message:\n"))
+            print(f"Responded with: {response}")
+        except Exception:
+            pass

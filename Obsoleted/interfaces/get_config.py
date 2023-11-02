@@ -6,7 +6,7 @@ def get_config():
         cfg = yaml.safe_load(cfg_file)
     return cfg
 
-def setup(context: zmq.Context = None) -> zmq.Socket:
+def setup(PORT: str, context: zmq.Context = None) -> zmq.Socket:
     """Sets up socket for connections."""
     context = context or zmq.Context()
     interface = context.socket(zmq.REP)
