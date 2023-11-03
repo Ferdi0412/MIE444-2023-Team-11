@@ -1,6 +1,6 @@
 import os, sys; sys.path.append(os.path.dirname(__file__));
 
-from simmer_functions import *
+from serial_functions import *
 
 import pygame
 import yaml
@@ -90,6 +90,8 @@ class UltrasonicSensor:
 
 ultrasonics = {name: UltrasonicSensor(value) for (name, value) in cfg['ultrasonic'].items()}
 
+print("Enterring main....")
+
 while True:
     clock.tick(60)
 
@@ -133,6 +135,7 @@ while True:
 
     # Update the display
     pygame.display.flip()
+
 
     # Optional: You may want to add logic here to update your screen based on signals and values
 
