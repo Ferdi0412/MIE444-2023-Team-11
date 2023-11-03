@@ -34,6 +34,7 @@ void loop()
 {
   if ( Serial.available() ) {
     char cmd = Serial.read();
+    Serial.println(cmd);
     switch ( cmd ) {
       case 'w':
         move_forward();
@@ -64,19 +65,6 @@ void loop()
     }
   }
 
-delay(500);
-      move_forward();
-      delay(500);
-      move_backward();
-      delay(500);
-      move_left();
-      delay(500);
-      move_right();
-      delay(500);
-      turn_ccw();
-      delay(500);
-      turn_cw();
-      stop();
 }
 
 void stop(){
@@ -143,7 +131,7 @@ void move_forward(){
   BL_forward();
   BR_forward();
 
-delay(1000);
+delay(300);
 
 stop();
 }
@@ -155,7 +143,7 @@ void move_backward(){
   FR_backward();
   BR_backward();
 
-delay(1000);
+delay(300);
 
 stop();
 }
@@ -165,7 +153,7 @@ void move_left(){
   BL_forward();
   FR_forward();
   BR_backward();
-  delay(1000);
+  delay(800);
 
 stop();
 }
@@ -176,7 +164,7 @@ void move_right(){
   FR_backward();
   BR_forward();
 
-delay(1000);
+delay(800);
 
 stop();
 }
@@ -187,7 +175,7 @@ void turn_ccw(){
   FR_forward();
   BR_forward();
 
-delay(1000);
+delay(200);
 
 stop();
 }
@@ -199,7 +187,7 @@ void turn_cw(){
   FR_backward();
   BR_backward();
 
-delay(1000);
+delay(200);
 
 stop();
 }
