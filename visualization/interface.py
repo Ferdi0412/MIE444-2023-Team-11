@@ -1,6 +1,7 @@
 import os, sys; sys.path.append(os.path.dirname(__file__));
 
 from serial_functions import *
+# from simmer_functions import *
 
 import pygame
 import yaml
@@ -58,6 +59,8 @@ class UltrasonicSensor:
         self._buffer_len: int  = params.get('buffer-len', 20)
         self._buffer: list     = [1] * self._buffer_len
         self._draw_mean: bool  = params.get('draw_mean', False)
+        self._xoffset = params.get('xoffset', 10)
+        self._yoffset = params.get('yoffset', 10)
 
     def draw(self):
         dist = self.latest() * px_scale
@@ -75,6 +78,11 @@ class UltrasonicSensor:
                 ex = cx + avg * math.sin(rot - angle)
                 ey = cy + avg * math.cos(rot - angle)
                 pygame.draw.circle(screen, avg_col, (ex, ey,), avg_size)
+        txt_val = f"{dist / px_scale * 0.3937:.1f}".encode('utf-8') # * 39.37
+        txt = text_font.render(txt_val, True, (0, 0, 0), (255, 255, 255))
+        txt_rect = txt.get_rect()
+        txt_rect.center = (cx + self._xoffset, cy + self._yoffset)
+        screen.blit(txt, txt_rect)
 
 
 
@@ -115,10 +123,10 @@ while True:
                 right()
 
             if event.key == pygame.K_q:
-                clockwise()
+                counterclockwise()
 
             if event.key == pygame.K_e:
-                counterclockwise()
+                clockwise()
 
     # Clear the screen with the background color
     screen.fill(bg_col)
@@ -132,6 +140,12 @@ while True:
     for i, us in enumerate(ultrasonics.values()):
         us.append(newest_readings[i])
         us.draw()
+
+    diff = f"{ultrasonics['u1'].latest() - ultrasonics['u2'].latest():.1f}"
+    txt = text_font.render(diff, True, (0, 0, 0), (255, 255, 255))
+    txt_rect = txt.get_rect()
+    txt_rect.center = (x0, y0)
+    screen.blit(txt, txt_rect)
 
     # Update the display
     pygame.display.flip()

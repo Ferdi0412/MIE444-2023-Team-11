@@ -1,3 +1,5 @@
+#include <SoftwareSerial.h>
+
 int flsensorTrig = 9;
 int frsensorTrig = 10;
 int rrsensorTrig = 11;
@@ -14,6 +16,8 @@ int llsensorEcho = A0;
 unsigned int time[7];
 int distance[7];
 
+SoftwareSerial motorSerial (2/*rx*/, 3/*tx*/);
+
 // To allow for string-type handling...
 
 void setup() {
@@ -22,6 +26,7 @@ void setup() {
 
   // put your setup code here, to run once:
   Serial.begin(9600);
+  motorSerial.begin(9600);
   pinMode(flsensorTrig, OUTPUT);
   pinMode(frsensorTrig, OUTPUT);
   pinMode(rrsensorTrig, OUTPUT);
@@ -67,20 +72,28 @@ void setup() {
   // Serial.print("back: ");
   // Serial.println(distance[3]);
 
-  if ( Serial.available() && Serial.read() == 'u' ) {
-    Serial.print(String(distance[0]));
-    Serial.print(";");
-    Serial.print(String(distance[1]));
-    Serial.print(";");
-    Serial.print(String(distance[2]));
-    Serial.print(";");
-    Serial.print(String(distance[3]));
-    Serial.print(";");
-    Serial.println(String(distance[4]));
-  }
-    // Serial.println((char *) distance);
+  if ( Serial.available() ) {
+    char cmd = Serial.read();
+    switch ( cmd ) {
+      case 'u':
+        Serial.print(String(distance[0]));
+        Serial.print(";");
+        Serial.print(String(distance[1]));
+        Serial.print(";");
+        Serial.print(String(distance[2]));
+        Serial.print(";");
+        Serial.print(String(distance[3]));
+        Serial.print(";");
+        Serial.println(String(distance[4]));
+        break;
+      
+      default:
+        motorSerial.write(cmd);
+        break;
 
-    
+    }
+  }
+
   delay(100);
 }
 

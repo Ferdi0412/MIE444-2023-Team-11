@@ -10,7 +10,9 @@ int FR_in2 = 7;
 int BR_enB = 3;
 int BR_in3 = 4;
 int BR_in4 = 2;
-int speed = 100;
+int speed_fwd = 100;
+int speed_rot = 100;
+int speed_lat = 130;
 
 void setup()
 {
@@ -76,49 +78,49 @@ analogWrite(BR_enB, 0);
 
 
 
-void FL_backward(){
+void FL_backward(int speed){
 analogWrite(FL_enA, speed);
 digitalWrite(FL_in1, HIGH); 
 digitalWrite(FL_in2, LOW);
 }
 
-void FL_forward(){
+void FL_forward(int speed){
 analogWrite(FL_enA, speed);
 digitalWrite(FL_in1, LOW); 
 digitalWrite(FL_in2, HIGH);
 }
 
-void BL_backward(){
+void BL_backward(int speed){
 analogWrite(BL_enB, speed);
 digitalWrite(BL_in3, LOW); 
 digitalWrite(BL_in4, HIGH);
 }
 
-void BL_forward(){
+void BL_forward(int speed){
 analogWrite(BL_enB, speed);
 digitalWrite(BL_in3, HIGH); 
 digitalWrite(BL_in4, LOW);
 }
 
-void FR_backward(){
+void FR_backward(int speed){
 analogWrite(FR_enA, speed);
 digitalWrite(FR_in1, LOW); 
 digitalWrite(FR_in2, HIGH);
 }
 
-void FR_forward(){
+void FR_forward(int speed){
 analogWrite(FR_enA, speed);
 digitalWrite(FR_in1, HIGH); 
 digitalWrite(FR_in2, LOW);
 }
 
-void BR_backward(){
+void BR_backward(int speed){
 analogWrite(BR_enB, speed);
 digitalWrite(BR_in3, HIGH); 
 digitalWrite(BR_in4, LOW);
 }
 
-void BR_forward(){
+void BR_forward(int speed){
 analogWrite(BR_enB, speed);
 digitalWrite(BR_in3, LOW); 
 digitalWrite(BR_in4, HIGH);
@@ -126,10 +128,10 @@ digitalWrite(BR_in4, HIGH);
 
 
 void move_forward(){
-  FL_forward();
-  FR_forward();
-  BL_forward();
-  BR_forward();
+  FL_forward(speed_fwd);
+  FR_forward(speed_fwd);
+  BL_forward(speed_fwd);
+  BR_forward(speed_fwd);
 
 delay(300);
 
@@ -138,10 +140,10 @@ stop();
 
 
 void move_backward(){
-  BL_backward();
-  FL_backward();
-  FR_backward();
-  BR_backward();
+  BL_backward(speed_fwd);
+  FL_backward(speed_fwd);
+  FR_backward(speed_fwd);
+  BR_backward(speed_fwd);
 
 delay(300);
 
@@ -149,31 +151,31 @@ stop();
 }
 
 void move_left(){
-  FL_backward();
-  BL_forward();
-  FR_forward();
-  BR_backward();
-  delay(800);
+  FL_backward(speed_lat);
+  BL_forward(speed_lat);
+  FR_forward(speed_lat);
+  BR_backward(speed_lat);
+  delay(400);
 
 stop();
 }
 
 void move_right(){
-  FL_forward();
-  BL_backward();
-  FR_backward();
-  BR_forward();
+  FL_forward(speed_lat);
+  BL_backward(speed_lat);
+  FR_backward(speed_lat);
+  BR_forward(speed_lat);
 
-delay(800);
+delay(400);
 
 stop();
 }
 
 void turn_ccw(){
-  FL_backward();
-  BL_backward();
-  FR_forward();
-  BR_forward();
+  FL_backward(speed_rot);
+  BL_backward(speed_rot);
+  FR_forward(speed_rot);
+  BR_forward(speed_rot);
 
 delay(200);
 
@@ -182,10 +184,10 @@ stop();
 
 
 void turn_cw(){
-  FL_forward();
-  BL_forward();
-  FR_backward();
-  BR_backward();
+  FL_forward(speed_rot);
+  BL_forward(speed_rot);
+  FR_backward(speed_rot);
+  BR_backward(speed_rot);
 
 delay(200);
 

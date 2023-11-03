@@ -41,15 +41,25 @@ ultrasonic:
   u1:
     location: [1.2, -2.58]
     rotation: 180
+    xoffset:  15
+    yoffset:  -10
   u2:
     location: [-1.2, -2.58]
     rotation: 180
+    xoffset:  -15
+    yoffset:  -10
   u3:
-    location: [-2.97, 0]
-    rotation: 270
+    location: [2.97, 0]
+    rotation: 90
+    xoffset:  20
+    yoffset:  10
   u4:
     location: [0, 2.97]
     rotation: 0
+    xoffset:  20
+    yoffset:  10
   u5:
-    location: [2.97, 0]
-    rotation: 90
+    location: [-2.97, 0]
+    rotation: 270
+    xoffset:  -20
+    yoffset: 20
