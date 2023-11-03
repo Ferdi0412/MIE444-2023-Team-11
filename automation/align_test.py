@@ -112,45 +112,45 @@ time_rx = 'Never'
 #RUNNING = True
 #cmd_sequence = ['w0-36', 'r0-90', 'w0-36', 'r0-90', 'w0-12', 'r0--90', 'w0-24', 'r0--90', 'w0-6', 'r0-720']
 def sensorSweep(numberSweeps):
-    
+
     flread = 0
     frread = 0
     lread = 0
     rread = 0
     bread = 0
-    
+
     for i in range(0,numberSweeps):
-        transmit('u0')
+        transmit('u1')
         #time.sleep(0.2)
         #print(f"Ultrasonic 0 reading: {round(responses[0], 3)}")
         flread = flread + responses[0]
-    
-        transmit('u1')
+
+        transmit('u3')
         #time.sleep(0.2)
         #print(f"Ultrasonic 1 reading: {round(responses[0], 3)}")
         rread = rread + responses[0]
-    
-        transmit('u2')
+
+        transmit('u5')
         #time.sleep(0.2)
         #print(f"Ultrasonic 2 reading: {round(responses[0], 3)}")
         lread = lread + responses[0]
-    
-        transmit('u3')
+
+        transmit('u4')
         #time.sleep(0.2)
         #print(f"Ultrasonic 3 reading: {round(responses[0], 3)}")
         bread = bread + responses[0]
-    
-        transmit('u4')
+
+        transmit('u2')
         #wtime.sleep(0.2)
         #print(f"Ultrasonic 3 reading: {round(responses[0], 3)}")
         frread = frread + responses[0]
-    
+
     flread = flread / numberSweeps
     frread = frread / numberSweeps
     lread = lread / numberSweeps
     rread = rread / numberSweeps
     bread = bread / numberSweeps
-    
+
     return([frread,flread,rread,lread,bread])
 
 def moveForward(fDistance):
@@ -161,7 +161,7 @@ def moveForward(fDistance):
         if responses[0] == math.inf:
             currentlyTranslating = False
     return()
-    
+
 def rotateRight(rDistance):
     transmit('r0-'+str(rDistance))
     currentlyRotating = True
@@ -187,7 +187,7 @@ def align(located):
     while not diagAlign and not wallAlign:
         readings = sensorSweep(3)
         #print(readings)
-        
+
         diagCheck = True
         for i in readings:
             if i > 8:
@@ -215,14 +215,14 @@ def align(located):
                     #print('Rotation Complete')
                 #else:
                     #print('Still Rotating')
-                    
+
     if diagAlign:
         print('Diagonally Aligned')
     else:
         print('Wall Aligned')
-    
+
     print('Degrees Rotated: '+str(degreesRotated))
-        
+
     if located:
         if wallAlign:
             lockList = [0-degreesRotated, 90-degreesRotated, 180-degreesRotated, 270-degreesRotated, 360-degreesRotated]
@@ -247,7 +247,7 @@ def align(located):
                 #print('Rotation Complete')
             #else:
                 #print('Still Rotating')
-                
+
     else:
         if diagAlign:
             transmit('r0--45')
@@ -260,7 +260,7 @@ def align(located):
                     #print('Rotation Complete')
                 #else:
                     #print('Still Rotating')
-                    
+
         readings = sensorSweep(1)
         if readings[0] < 12:
             transmit('r0-90')
@@ -273,7 +273,7 @@ def align(located):
                     #print('Rotation Complete')
                 #else:
                     #print('Still Rotating')
-                    
+
     return()
 
 def center():
@@ -281,16 +281,16 @@ def center():
     for i in range(len(readings)):
         while readings[i] > 12:
             readings[i] = readings[i] - 12
-    
+
     for j in range(len(readings)):
         if readings[j] > 9.6:
             readings[j] = readings[j] - 12
-            
+
     fbDifference = readings[0] - readings[4]
     lrDifference = readings[2] - readings[3]
-    
+
     #print(str(fbDifference) + ',' + str(lrDifference))
-    
+
     transmit('w0-'+str(fbDifference/2))
     currentlyTranslating = True
     while currentlyTranslating:
@@ -298,7 +298,7 @@ def center():
         time.sleep(0.1)
         if responses[0] == math.inf:
             currentlyTranslating = False
-    
+
     transmit('d0-'+str(lrDifference/2))
     currentlyTranslating = True
     while currentlyTranslating:
@@ -306,7 +306,7 @@ def center():
         time.sleep(0.1)
         if responses[0] == math.inf:
             currentlyTranslating = False
-    
+
     return()
 #ct = 0
 #while RUNNING:
@@ -357,5 +357,5 @@ while runningSequence:
     else:
         moveForward(12)
         center()
-    
+
 

@@ -20,6 +20,10 @@ cfg = get_cfg(os.path.dirname(__file__) + '/config.yaml')
 # Initialize Pygame
 pygame.init()
 
+text_font = pygame.font.SysFont("Times New Roman", 18)
+
+
+
 # Create the Pygame screen with dimensions from the configuration
 screen = pygame.display.set_mode((cfg['screen-width'], cfg['screen-height']))
 
@@ -71,6 +75,8 @@ class UltrasonicSensor:
                 ex = cx + avg * math.sin(rot - angle)
                 ey = cy + avg * math.cos(rot - angle)
                 pygame.draw.circle(screen, avg_col, (ex, ey,), avg_size)
+
+
 
     def append(self, value: float):
         _ = self._buffer.pop(0)
