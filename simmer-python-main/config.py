@@ -153,7 +153,8 @@ r0_info = {
 
 drives = {
     'w0': Drive(w0_info),
-    'r0': Drive(r0_info)
+    'r0': Drive(r0_info),
+    'd0': Drive(d0_info)
 }
 
 # Sensors
