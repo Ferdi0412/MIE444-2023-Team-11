@@ -84,6 +84,7 @@ class TranslationError (Exception):
 
 def move(direction: str, dist: str) -> str:
     """Send a movement command to SIMMER"""
+    transmit('xx') ## End previous movement...
     raw_res = transmit(f"{direction}-{dist}")
     return '' if raw_res[0] == math.inf else 'FAIL'
 
@@ -110,7 +111,7 @@ def translate(msg: str) -> str:
             return move('d0-', distance)
 
         case 'M':
-            return move('w0', '0') == 'FAIL'
+            return int(move('w0', '0') == 'FAIL')
 
         case 'H':
             transmit('xx')
