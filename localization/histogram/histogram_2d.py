@@ -8,11 +8,23 @@ from movement import move
 
 import matplotlib.pyplot as plt
 
-probs = measure(2, None, maze)
 
-probs = move(2, 1, probs)
+## Simulate starting somewhere with 1 wall, move 2 steps left, then 2 walls...
+## Scan 1...
+probs = measure(1, None, maze)
+probs = move(-1, 0, probs, maze)
 
-print(probs)
+plt.matshow(probs)
+plt.show()
+
+## Scan 2...
+probs = measure(1, probs, maze)
+probs = move(-1, 0, probs, maze)
+plt.matshow(probs)
+plt.show()
+
+## Scan 3...
+probs = measure(2, probs, maze)
 
 plt.matshow(probs)
 plt.show()

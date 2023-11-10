@@ -1,8 +1,9 @@
 import numpy as np
 
-def measure(current_block: int, probs: np.array, map: np.array):
+def measure(current_block: int, probs: np.array, map: np.array = None):
     """Once current_block configuration found, update probabilities. If probs is None, create matrix using all 1s."""
-    probs = probs or np.ones(map.shape)
+    if probs is None:
+        probs = np.ones(map.shape)
 
     # Sensor readings -> Instead of 0 and 1, use these values (error???)
     p_hit  = 0.6
