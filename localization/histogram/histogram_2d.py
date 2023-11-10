@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 probs = measure(2, None, maze)
 
-probs = move(-3, 0, probs)
+probs = move(2, 1, probs)
 
 print(probs)
 

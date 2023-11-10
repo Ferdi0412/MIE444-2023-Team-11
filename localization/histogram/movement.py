@@ -24,13 +24,14 @@ def move(x_steps: int, y_steps: int, probs: np.array, *, kernel_: np.array = Non
     ## Move upwards/downwards (across rows)
     if y_steps > 0:
         probs[y_steps:, :]  = probs[:-y_steps, :]
-        probs[:-y_steps, :] = 0
+        probs[:y_steps, :] = 0
 
     elif y_steps < 0:
-        probs[:-y_steps, :] = probs[y_steps:, :]
-        probs[y_steps:, :]  = 0
+        probs[:y_steps, :] = probs[(-y_steps):, :]
+        probs[y_steps:, :] = 0
 
     ## Apply convolution to simulate errors...
+    ## Add convolution at the end - AFTER movement stuff added, as this is where the error occurs...
     probs = convolve2d(probs, kernel_, 'same')
 
     return probs
