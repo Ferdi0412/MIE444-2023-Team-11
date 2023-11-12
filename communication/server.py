@@ -147,7 +147,7 @@ if __name__ == "__main__":
         match (request[0]):
             case 'F':
                 ## Forward
-                move(float(request[1:]))
+                move(float(request[1:]), 0)
                 break
 
             case _ : ## Fallback
