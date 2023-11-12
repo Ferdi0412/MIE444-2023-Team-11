@@ -137,11 +137,11 @@ def get_gyroscope() -> dict:
 #################
 
 if __name__ == "__main__":
+    ## Setup publishing of async values...
     robot.store_message = async_messages
+    Thread(target = robot.receive, daemon=True)
 
-    ## TODO: Implement this if using async stuff...
-    # Thread(target = robot.receive, daemon=True)
-
+    ## Setup handling of direct requests...
     while True:
         requestor, request = server.recv_multipart()
         match (request[0]):
