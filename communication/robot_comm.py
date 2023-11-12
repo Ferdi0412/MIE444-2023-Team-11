@@ -1,6 +1,6 @@
 """Functions intended to run communicate with the robot."""
 from threading import Lock
-from typing import Callable
+from typing import Callable, Self
 import serial
 
 class Unimplemented(Exception):
@@ -27,12 +27,35 @@ class Robot:
         self.robot_cmd, self.robot_resp = serial_cmd, serial_resp
         self.MAX_RETRIES = MAX_RETRIES
 
-    def store_message(self, message: bytes):
+    def store_message(self, message: bytes) -> None:
         """Handles outcoming messages which are not inteded for the transmit call which the robot is expected to repond to.
 
         Please override this.......
         """
         raise Unimplemented
+
+    def set_store_message(self, method: Callable[[Self, bytes], None]) -> None:
+        """Override store_message with a new method, which takes a reference to the class instance as the first param.
+
+        Example:
+        ## Instantiate class
+        robot_comms = Robot(...)
+
+        ## Assign function that DOES NOT take reference to instance
+        def opt_1(msg: bytes) -> None:
+            print(msg)
+
+        robot_comms.store_message = opt_1
+        robot_comms.store_message('Hi there!') # Prints 'Hi there!'
+
+        ## Assign function that takes reference to instance
+        def opt_2(self: Robot, msg: bytes) -> None:
+            print(f"{self.__class__.__name__} -> {msg}")
+
+        robot_comms.set_store_message(opt_2)
+        robot_comms.store_message('Hi there!') # Prints 'Robot -> Hi there!'
+        """
+        self.store_message = lambda msg: method(self, msg)
 
     #########################
     ### COMMUNICATE BASIC ###
