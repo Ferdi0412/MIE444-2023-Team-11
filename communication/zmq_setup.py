@@ -24,6 +24,7 @@ def get_subscriber(*, timeout: int = None) -> zmq.Socket:
     if timeout:
         context.setsockopt(zmq.RCVTIMEO, timeout)
     socket = context.socket(zmq.SUB)
+    socket.setsockopt_string(zmq.SUBSCRIBE, '')
     socket.connect(f"tcp://127.0.0.1:{PUBLISHER_PORT}")
     return socket
 
