@@ -1,11 +1,16 @@
+import zmq
 from threading import Thread
+from typing import Dict
 
+## Expose local files
 import sys, os
 sys.path.append(os.path.dirname(__file__))
 
 from robot_comm  import Robot
 from zmq_setup   import get_publisher, get_server
 from serial_comm import setup_serial
+
+
 
 ##############
 ### CONFIG ###
@@ -21,6 +26,8 @@ current_state = {
 
 }
 
+
+
 #############
 ### SETUP ###
 #############
@@ -33,8 +40,20 @@ robot_resp = setup_serial(COM_IN,  ROB_TIMEOUT)
 
 robot = Robot(robot_cmd, robot_resp)
 
+robot.owner_id = None
+
+class OwnershipError (Exception):
+    """Raised for requests that require ownership/elevation."""
+    pass
+
+class OwnershipConflict (Exception):
+    """Raised for CLAIM-OWN witout high_priority, if already owned."""
+    pass
+
 class Unimplemented (Exception):
     pass
+
+
 
 ######################
 ### ASYNC MESSAGES ###
@@ -44,6 +63,8 @@ def async_messages(msg: bytes) -> None:
     raise Unimplemented
     current_state.update(dict("Add something..."))
     publisher.send(bytes("Encode data here!!!"))
+
+
 
 ######################
 ### MESSAGE HANDLE ###
@@ -109,6 +130,14 @@ def rotate(clockwise: float) -> bool:
     msg = b''
     return parse_motor_ack(robot.send_recv(msg, is_motor_ack))
 
+def check_motion() -> bool:
+    """Retrieves whether the robot is in motion or not."""
+    raise Unimplemented
+
+def check_progress() -> Dict[str, float]:
+    """Retrieves progress along motion of robot."""
+    raise Unimplemented
+
 def stop() -> bool:
     """Sends stop command."""
     raise Unimplemented
@@ -132,10 +161,94 @@ def get_gyroscope() -> dict:
     return parse_gyroscope(robot.blocking_recv(is_gyroscope))
 
 
+
+##########################
+### PERMISSIONS HANDLE ###
+##########################
+def is_owner(client_id: bytes) -> bool:
+    """Returns True if the client_id is the ID of the robot Owner."""
+    return ( client_id == robot.owner_id )
+
+def has_owner() -> bool:
+    """Returns True if the robot is owned."""
+    return ( robot.owner_id is not None )
+
+def require_ownership(client_id: bytes) -> None:
+    """Raises OwnershipError."""
+    if not is_owner(client_id):
+        raise OwnershipError
+
+
+
+######################
+### REQUEST HANDLE ###
+######################
+def handle_request(client_id: bytes, msg: bytes) -> bytes | None:
+    """Handle incoming request, and return response to send."""
+    # req_head, req_data, *_ = request.split(b'\n')
+    req_head, *req_data = msg.split(b'\n')
+    req_data = b'\n'.join(req_data)
+
+    ## Handle request according to format
+    match (req_head):
+
+        ## Actions that require Ownership/Elevation
+        case b'MOVE':
+            require_ownership(client_id)
+            fwd, right = req_data.decode('utf-8').split(';')
+            return move(float(fwd), float(right))
+
+        case b'ROTATE':
+            require_ownership(client_id)
+            angle = float( req_data.decode('utf-8') )
+            return rotate(angle)
+
+        case b'STOP':
+            require_ownership(client_id)
+            return stop()
+
+        ## Requests that do not require ownership/elevation
+        case b'IN-MOTION':
+            return check_motion()
+
+        case b'PROGRESS':
+            return check_progress()
+
+        case b'PROGRESS-ALL':
+            return min( check_progress().values() )
+
+        case b'ULTRASONIC':
+            return get_ultrasonics()
+
+        case b'GYROSCOPE':
+            return get_gyroscope()
+
+        ## Server Ownership/Elevation control
+        case b'CLAIM-OWN':
+            if not req_data and has_owner():
+                raise OwnershipConflict
+            robot.owner_id = client_id
+            return None
+
+        case b'IS-OWNER':
+            return is_owner(client_id)
+
+        case b'HAS-OWNER':
+            return has_owner()
+
+        case b'REV-OWN':
+            if not is_owner(client_id):
+                raise OwnershipConflict
+            robot.owner_id = None
+            return None
+
+        ## Fallback
+        case _:
+            raise Unimplemented
+
 #################
 ### MAIN LOOP ###
 #################
-
 if __name__ == "__main__":
     ## Setup publishing of async values...
     robot.store_message = async_messages
@@ -143,16 +256,24 @@ if __name__ == "__main__":
 
     ## Setup handling of direct requests...
     while True:
-        requestor, request = server.recv_multipart()
-        match (request[0]):
-            case 'F':
-                ## Forward
-                move(float(request[1:]), 0)
-                break
+        ## Catch zmq.Again to allow timeouts, in order to kill program with KeyboardExit after .recv(...) times out
+        try:
+            requestor, request = server.recv_multipart()
 
-            case _ : ## Fallback
-                pass
+        except zmq.Again:
+            continue
 
-        msg_resp = b''
+        try:
+            msg_resp = handle_request(requestor, request)
+
+        ## Check if invalid ownership assigment
+        except OwnershipConflict:
+            msg_resp = b'OWNERSHIP_CONFLICT'
+
+        ## Check if ownership required
+        except OwnershipError:
+            msg_resp = b'OWNERSHIP_REQUIRED'
+
+        ## Send response
         server.send_multipart([requestor, msg_resp])
 
