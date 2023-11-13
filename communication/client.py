@@ -3,9 +3,12 @@ from threading import Thread
 import sys, os
 sys.path.append(os.path.dirname(__file__))
 
+from zmq_setup import get_client, get_subscriber
+
 class Client:
-    def __init__(self, unique_identifier):
+    def __init__(self, unique_identifier: bytes) -> None:
         self.uid = unique_identifier
+        self.client = get_client()
 
 
 
