@@ -1,16 +1,25 @@
 """Functions intended to run communicate with the robot."""
-from threading import Lock
-from typing import Callable, Self
+from threading import Lock, Thread
+from typing    import Callable, Self
+
+## Keep serial to avoid confusing serial.Serial and custom Serial class...
 import serial
+import zmq
 
 class Unimplemented(Exception):
-    pass
+    """Indicates that something needs implementation."""
+    #pass
 
 class MaxRetries(Exception):
-        """Intended for when response was not returned within required number of retries."""
-        pass
+    """Intended for when response was not returned within required number of retries."""
+    #pass
 
-class Robot:
+class ExistingThread(Exception):
+    """Intended for when a Thread is already running for Serial class."""
+    #pass
+
+class Serial:
+    """Class for allowing asynchronous Serial control."""
     MaxRetries = MaxRetries
 
     def __init__(self, serial_cmd: serial.Serial, serial_resp: serial.Serial, *, mutex_lock: Lock = None, MAX_RETRIES = 20):
@@ -26,6 +35,7 @@ class Robot:
         self.mutex = mutex_lock or Lock()
         self.robot_cmd, self.robot_resp = serial_cmd, serial_resp
         self.MAX_RETRIES = MAX_RETRIES
+        self.thread = None
 
     def store_message(self, message: bytes) -> None:
         """Handles outcoming messages which are not inteded for the transmit call which the robot is expected to repond to.
@@ -72,6 +82,7 @@ class Robot:
         response = self.robot_resp.readline()
         self.mutex.release()
         return response
+
 
     def blocking_recv(self, resp_check: Callable[[bytes], bool]) -> bytes:
         """Returns first message that returns True when run inside Callable.
@@ -152,3 +163,26 @@ class Robot:
 
         ## Raise MaxRetries if no appropriate response was received
         raise MaxRetries
+
+    ## TODO: Remove async_ to avoid confusing with something that is actually implementing async...
+    def async_recv(self):
+        while True:
+            ## Use try-catch zmq.Again to keep trying despite timeout
+            try:
+                msg = self.receive()
+            except zmq.Again:
+                continue
+
+            try:
+                self.store_message(msg)
+
+            except Exception as exc:
+                print(f"[Error] -> <{self.__class__.__name__}>.async_recv()")
+                print( "...   | -> Thread ending now!")
+                raise exc
+
+    def start_async_recv_thread(self):
+        """Start async recv thread."""
+        if self.thread is not None:
+            raise ExistingThread
+        self.thread = Thread(target = self.async_recv, daemon=True)
