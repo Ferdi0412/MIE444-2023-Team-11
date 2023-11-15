@@ -9,9 +9,15 @@ def sensorSweep(numberSweeps):
     rread = 0
     bread = 0
     
+    sensorValues=client.ultrasonic()
+    
     for i in range(0,numberSweeps):
-        
-        #SEND "US-ALL"
+        sensorValues = client.ultrasonic()
+        frread = frread + sensorValues{"0"}
+        rread = rread + sensorValues{"1"}
+        bread = bread + sensorValues{"2"}
+        lread = lread + sensorValues{"3"}
+        flread = flread + sensorValues{"4"}
         #ADD RESPONSES TO VARIABLES
     
     flread = flread / numberSweeps
@@ -30,17 +36,24 @@ def sensorSweep(numberSweeps):
     return(wallAlert, informationList)
 
 def checkIfMovement():
-    moving = #SEND "M"
+    moving = client.in_motion()
     return(moving)
 
 def checkMovementProgress():
-    progress = #SEND "P"
+    progress = client.progress_all()
     return(progress)
     
 
 def emergencyMove(direction):
-    
-    #SEND "d 1" where d is direction
+    if direction == "F":
+        client.move(1,0)
+    elif direction == "R":
+        client.move(0,1)
+    elif direction == "L":
+        client.move(0,-1)
+    else:
+        client.move(-1,0)
+        
     
     currentlyTranslating = True
     while currentlyTranslating:
@@ -53,11 +66,12 @@ def emergencyMove(direction):
 
 def move(direction,distance):
     
-    #SEND "d #" where d is direction and # is distance
+    client.move(0,4)
     
     currentlyTranslating = True
     while currentlyTranslating:
-        moving, progress = checkMovement()
+        moving = checkIfMovement()
+        progress = checkMovementProgress()
         progress = progress / 100
         wallAlert, information = sensorSweep(1)
         direction = ['B', 'B', 'R', 'L', 'F']
@@ -78,8 +92,11 @@ def rotate(direction, degrees):
         if wallAlert[i] == True:
             emergencyMove(direction[i])
     
+    if direction =="SL":
+        degrees = -degrees
+        
     #Send "r #"" where r is rotating direction (SR or SL) and # is number of degrees
-    
+    client.rotate(degrees)
     currentlyRotating = True
     while currentlyRotating:
         rotating = checkIfMovement()
@@ -91,7 +108,7 @@ def align(located):
     rotate('SL', -45)
     degreesRotated = -45
     diagAlign = False
-    wallAlign = False
+    wallAliwgn = False
     while not diagAlign and not wallAlign:
         wallAlert, readings = sensorSweep(3)
         #print(readings)
@@ -187,3 +204,109 @@ def center():
         move('R', lrDifference / 2)
     
     return()
+
+def roomDetector():
+    information = sensorSweep(10)
+    modInformation = [((information[0]+information[1])/2),information[2],information[3],information[4]]
+    numberOfWalls = 0
+    roomSequence = [True, True, True, True]
+    for i in range(len(modInformation)):
+        if modInformation[i] < 12:
+            roomSequence[i] = True
+            numberOfWalls = numberOfWalls + 1
+        else:
+            roomSequence[i] = False
+    
+    if numberOfWalls == 3:
+        roomType = 'D'
+    elif numberOfWalls == 2:
+        print(roomSequence)
+        if roomSequence == [True, False, False, True] or roomSequence == [False, True, True, False]:
+            roomType = 'H'
+        else:
+            roomType = 'C'
+    elif numberOfWalls == 1:
+        roomType = 'T'
+    else:
+        roomType = 'F'
+    print('Room Type Identified: '+roomType)
+    return(information, roomType)
+
+def findNewLocations(locationList,maze,roomType,stepOne):
+    newList = []
+    if stepOne:
+        for i in range(len(maze)):
+            for j in range(len(maze[i])):
+                if maze[i][j] == roomType:
+                    newList.append(str(i)+str(j)+'U')
+    else:
+        mazeBoundY = len(maze)
+        mazeBoundX = len(maze[0])
+        
+        for i in range(len(locationList)):
+            infoCheck = [*locationList[i]]
+            #print(str(infoCheck))
+            if int(infoCheck[0]) != 0:
+                if maze[int(infoCheck[0])-1][int(infoCheck[1])] == roomType:
+                    newList.append((str(int(infoCheck[0])-1))+infoCheck[1]+'N')
+                    
+            if int(infoCheck[0]) != (mazeBoundY - 1):
+                if maze[int(infoCheck[0])+1][int(infoCheck[1])] == roomType:
+                    newList.append((str(int(infoCheck[0])+1))+infoCheck[1]+'S')
+            
+            if int(infoCheck[1]) != 0:
+                if maze[int(infoCheck[0])][int(infoCheck[1])-1] == roomType:
+                    newList.append(infoCheck[0]+(str(int(infoCheck[1])-1))+'W')
+
+            if int(infoCheck[1]) != (mazeBoundX - 1):
+                if maze[int(infoCheck[0])][int(infoCheck[1])+1] == roomType:
+                    newList.append(infoCheck[0]+(str(int(infoCheck[1])+1))+'E')
+    
+    print('Unmodified New List: ' + str(newList))
+    
+    counter = 0
+    
+    while counter < len(newList):
+        if newList.count(newList[counter]) > 1:
+            newList.remove(newList[counter])
+        counter = counter + 1
+    
+    #print('New List:' + str(newList))
+    return(newList)
+
+def localizer():
+    locationList = []
+    localized = False
+    
+    firstRow = ['C','T','H','C','E','D','E','D']
+    secondRow = ['T','C','E','C','H','F','H','T']
+    thirdRow = ['H','E','D','E','E','H','E','H']
+    fourthRow = ['C','H','T','H','H','C','E','D']
+    
+    maze = [firstRow, secondRow, thirdRow, fourthRow]
+    
+    align(False)
+    center()
+    information, roomType = roomDetector()
+    locationList = findNewLocations(locationList,maze,roomType,True)
+    
+    while not localized:
+        input('Next Step: ')
+        information = sensorSweep(10)
+        if information[0] < 12 or information[1] < 12:
+            align(True)
+            if information[3] < 12:
+                rotateLeft(90)
+            else:
+                rotateRight(90)
+            center()
+        else:
+            moveForward(12)
+            center()
+            information, roomType = roomDetector()
+            locationList = findNewLocations(locationList,maze,roomType,False)
+        if len(locationList) == 1:
+            localized = True
+            
+    print('Localization Complete')
+    return(locationList[0])
