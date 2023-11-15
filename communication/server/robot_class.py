@@ -4,7 +4,7 @@ from math import cos, sin, atan, pi
 
 import sys, os; sys.path.append(os.path.dirname(__file__))
 
-from ..serial_class import Serial
+from ..serial_class import NewSerial
 import robot_msg_encoding as enc
 
 ## Motor IDs:

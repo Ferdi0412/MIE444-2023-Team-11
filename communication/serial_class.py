@@ -1,10 +1,9 @@
 """Functions intended to run communicate with the robot."""
-from threading import Lock, Thread, Event
+# from threading import Lock, Thread, Event
 from typing    import Callable, Self
 
 ## Keep serial to avoid confusing serial.Serial and custom Serial class...
 import serial
-import zmq
 
 class Unimplemented(Exception):
     """Indicates that something needs implementation."""
@@ -22,7 +21,7 @@ class NewSerial:
     """Class for allowing asynchronous Serial control."""
     MaxRetries = MaxRetries
 
-    def __init__(self, serial_cmd: serial.Serial, serial_resp: serial.Serial, *, mutex_lock: Lock = None, MAX_RETRIES = 20):
+    def __init__(self, serial_cmd: serial.Serial, serial_resp: serial.Serial, *, MAX_RETRIES = 20):
         """...
         PARAMS:
         |- serial_cmd <serial.Serial>:
@@ -32,11 +31,9 @@ class NewSerial:
         |- [mutex_lock] <threading.Lock>:
         |       Used as lock for all receiving methods.
         """
-        self.mutex = mutex_lock or Lock()
         self.robot_cmd, self.robot_resp = serial_cmd, serial_resp
         self.MAX_RETRIES = MAX_RETRIES
         self.thread = None
-        self.flag   = Event()
         ## Consider moving kill_quietly to another flag...
         ## If kill_quietly = False, raises InterruptedError on self.recv_thread_kill(...)
         self.kill_quietly = True
@@ -81,10 +78,7 @@ class NewSerial:
 
     def receive(self):
         """Receive a response from the robot. Assumes line-ending (ie. ends in '\n'). Intended for async thread."""
-        ## Acquire mutex. If mutex already owned, this will wait until it becomes available again before continuing.
-        self.mutex.acquire()
         response = self.robot_resp.readline()
-        self.mutex.release()
         return response
 
 
@@ -101,30 +95,18 @@ class NewSerial:
         |    If True, corresponding message is returned.
         |    If no value returns True within MAX_RETRIES, MaxRetries is raised.
         """
-        ## Get mutex to prevent async thread from reading values this might need....
-        self.mutex.acquire()
+        ## Iterate for MAX_RETRIES
+        for _ in range(self.MAX_RETRIES):
+            ## Assumes all incoming messages end with endline
+            msg = self.robot_resp.readline()
 
-        ## In case of an error anywhere, release mutex, then propogate error...
-        try:
-            ## Iterate for MAX_RETRIES
-            for _ in range(self.MAX_RETRIES):
-                ## Assumes all incoming messages end with endline
-                msg = self.robot_resp.readline()
+            if resp_check(msg):
+                return msg
 
-                ## Check if desired message, if so, release mutex and return
-                if resp_check(msg):
-                    self.mutex.release()
-                    return msg
+            self.store_message(msg)
 
-                self.store_message(msg)
-
-            ## If iteration ended (MAX_RETRIES reached), raise MaxRetries
-            raise self.MaxRetries
-
-        ## Releasing mutex before propogating error...
-        except Exception as exc:
-            self.mutex.release()
-            raise exc
+        ## If iteration ended (MAX_RETRIES reached), raise MaxRetries
+        raise self.MaxRetries
 
     def send_recv(self, cmd_msg: bytes, resp_check: Callable[[bytes], bool]) -> bytes:
         """Sends a message to the robot, then waits for a messge that returns True when input into resp_check.
@@ -140,68 +122,17 @@ class NewSerial:
         |      message is returned.
         |      If no value returns True from resp_check within MAX_RETRIES, MaxRetries is raised.
         """
-        ## Get mutex, to prevent async thread from reading values this call might need.
-        ## This will block until mutex is available...
-        self.mutex.acquire()
-
-        ## In case of error in transmit_raw, release mutex, then propogate error
-        try:
-            self.transmit_raw(cmd_msg)
-
-        except Exception as exc:
-            self.mutex.release()
-            raise exc
+        self.transmit_raw(cmd_msg)
 
         ## Iterate for max MAX_RETRIES
         for _ in range(self.MAX_RETRIES):
             ## Assume all incoming messages end with an endline ('\n', maybe also a '\r' - check C++ Serial.prinln() impl.)
             msg = self.robot_resp.readline()
 
-            ## If resp_check is True, release mutex and return this value
             if resp_check(msg):
-                self.mutex.release()
                 return msg
 
             ## If resp_check is False, run store_outcoming and iterate
             self.store_message(msg)
-
         ## Raise MaxRetries if no appropriate response was received
         raise MaxRetries
-
-    ## TODO: Remove async_ to avoid confusing with something that is actually implementing async...
-    def recv_thread(self):
-        while True:
-            if self.flag.is_set():
-                if self.kill_quietly:
-                    return
-                else:
-                    raise InterruptedError
-
-            ## Use try-catch zmq.Again to keep trying despite timeout
-            try:
-                msg = self.receive()
-            except zmq.Again:
-                continue
-
-            try:
-                self.store_message(msg)
-
-            except Exception as exc:
-                print(f"[Error] -> <{self.__class__.__name__}>.async_recv()")
-                print( "...   | -> Thread ending now!")
-                raise exc
-
-    def start_recv_thread(self):
-        """Start async recv thread."""
-        if self.thread is not None:
-            if self.thread.is_alive():
-                raise ExistingThread
-            else:
-                self.thread.join()
-        self.thread = Thread(target = self.recv_thread, daemon=True)
-
-    def kill_recv_thread(self, blocking=True):
-        self.flag.set()
-        if blocking:
-            self.thread.join()
-            self.thread = None

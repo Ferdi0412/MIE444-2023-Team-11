@@ -7,7 +7,6 @@ Requires pyserial library...
 """
 
 from serial    import Serial
-from threading import Thread
 from struct    import unpack, pack
 from typing    import Tuple
 
