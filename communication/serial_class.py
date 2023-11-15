@@ -7,15 +7,15 @@ import serial
 
 class Unimplemented(Exception):
     """Indicates that something needs implementation."""
-    #pass
 
 class MaxRetries(Exception):
     """Intended for when response was not returned within required number of retries."""
-    #pass
 
 class ExistingThread(Exception):
     """Intended for when a Thread is already running for Serial class."""
-    #pass
+
+class BytesNotSent(Exception):
+    """Raised when not all bytes of a message are sent."""
 
 class NewSerial:
     """Class for allowing asynchronous Serial control."""
@@ -71,14 +71,16 @@ class NewSerial:
     #########################
     ### COMMUNICATE BASIC ###
     #########################
-    def transmit_raw(self, msg: bytes):
+    def send(self, msg: bytes):
         """Send msg to robot. Assumes encoded message."""
-        for byte_ in msg:
-            self.robot_cmd.write(byte_)
+        bytes_sent = self.robot_cmd.write(msg)
+        if not bytes_sent == len(msg):
+            raise BytesNotSent(f"Only {bytes_sent} of {len(msg)} were sent!\nMessage: {msg}")
 
     def receive(self):
         """Receive a response from the robot. Assumes line-ending (ie. ends in '\n'). Intended for async thread."""
-        response = self.robot_resp.readline()
+        msg = self.robot_resp.readline()
+        self.store_message(msg)
         return response
 
 
@@ -100,10 +102,10 @@ class NewSerial:
             ## Assumes all incoming messages end with endline
             msg = self.robot_resp.readline()
 
+            self.store_message(msg)
+
             if resp_check(msg):
                 return msg
-
-            self.store_message(msg)
 
         ## If iteration ended (MAX_RETRIES reached), raise MaxRetries
         raise self.MaxRetries
@@ -122,7 +124,7 @@ class NewSerial:
         |      message is returned.
         |      If no value returns True from resp_check within MAX_RETRIES, MaxRetries is raised.
         """
-        self.transmit_raw(cmd_msg)
+        self.send(cmd_msg)
 
         ## Iterate for max MAX_RETRIES
         for _ in range(self.MAX_RETRIES):
