@@ -1,14 +1,22 @@
-"""A set of functions for connecting to the "robot server"."""
+####################
+### MORE GENERAL ###
+####################
+## == Expose directory ==
+import sys, os; sys.path.append(os.path.dirname(__file__))
 
-## Expose stuff in this directory TODO: Check if this is strictly necessary in a __init__.py file
-import sys as _sys, os as _os
-_sys.path.append(_os.path.dirname(__file__))
+## == Import modules ==
+import serial_base
+import serial_class
+import zmq_setup
 
-import zmq_setup, serial_base
+## == Cleanup ==
+sys.path.pop()
 
-from zmq_setup import get_subscriber, get_client
-
-from serial_base import setup_serial, decode_float, decode_int16, decode_int32
-
-__all__ = [get_subscriber, get_client, setup_serial, decode_float, decode_int16, decode_int32]
-
+######################
+### ROBOT-SPECIFIC ###
+######################
+def import_robot_client():
+    try:
+        from robot import client
+    except ImportError:
+        pass
