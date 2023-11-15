@@ -1,5 +1,5 @@
 """Functions intended to run communicate with the robot."""
-from threading import Lock, Thread
+from threading import Lock, Thread, Event
 from typing    import Callable, Self
 
 ## Keep serial to avoid confusing serial.Serial and custom Serial class...
@@ -18,7 +18,7 @@ class ExistingThread(Exception):
     """Intended for when a Thread is already running for Serial class."""
     #pass
 
-class Serial:
+class NewSerial:
     """Class for allowing asynchronous Serial control."""
     MaxRetries = MaxRetries
 
@@ -36,6 +36,10 @@ class Serial:
         self.robot_cmd, self.robot_resp = serial_cmd, serial_resp
         self.MAX_RETRIES = MAX_RETRIES
         self.thread = None
+        self.flag   = Event()
+        ## Consider moving kill_quietly to another flag...
+        ## If kill_quietly = False, raises InterruptedError on self.recv_thread_kill(...)
+        self.kill_quietly = True
 
     def store_message(self, message: bytes) -> None:
         """Handles outcoming messages which are not inteded for the transmit call which the robot is expected to repond to.
@@ -165,8 +169,14 @@ class Serial:
         raise MaxRetries
 
     ## TODO: Remove async_ to avoid confusing with something that is actually implementing async...
-    def async_recv(self):
+    def recv_thread(self):
         while True:
+            if self.flag.is_set():
+                if self.kill_quietly:
+                    return
+                else:
+                    raise InterruptedError
+
             ## Use try-catch zmq.Again to keep trying despite timeout
             try:
                 msg = self.receive()
@@ -181,8 +191,17 @@ class Serial:
                 print( "...   | -> Thread ending now!")
                 raise exc
 
-    def start_async_recv_thread(self):
+    def start_recv_thread(self):
         """Start async recv thread."""
         if self.thread is not None:
-            raise ExistingThread
-        self.thread = Thread(target = self.async_recv, daemon=True)
+            if self.thread.is_alive():
+                raise ExistingThread
+            else:
+                self.thread.join()
+        self.thread = Thread(target = self.recv_thread, daemon=True)
+
+    def kill_recv_thread(self, blocking=True):
+        self.flag.set()
+        if blocking:
+            self.thread.join()
+            self.thread = None

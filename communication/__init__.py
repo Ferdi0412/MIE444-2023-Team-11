@@ -4,8 +4,11 @@
 import sys as _sys, os as _os
 _sys.path.append(_os.path.dirname(__file__))
 
+import zmq_setup, serial_base
+
 from zmq_setup import get_subscriber, get_client
 
-from serial_comm import setup_serial, decode_float, decode_int16, decode_int32
+from serial_base import setup_serial, decode_float, decode_int16, decode_int32
 
 __all__ = [get_subscriber, get_client, setup_serial, decode_float, decode_int16, decode_int32]
+

@@ -11,6 +11,8 @@ from threading import Thread
 from struct    import unpack, pack
 from typing    import Tuple
 
+ENDIANESS = '>'
+
 def setup_serial(port: str, timeout: float = None):
     """
 
@@ -37,7 +39,7 @@ def decode_int16(value: bytes, *, unsigned: bool = False) -> Tuple[int]:
     |     If true, msg is interpreted as uint16_t.
     |     Otherwise interpreted as int16_t.
     """
-    return unpack('H' if unsigned else 'h', value)
+    return unpack(ENDIANESS + ('H' if unsigned else 'h'), value)
 
 def encode_int16(value: int, *, unsigned: bool = False) -> bytes:
     """Returns value encoded as bytes representing an int16_t (short) value, to send via. Serial.
@@ -49,7 +51,7 @@ def encode_int16(value: int, *, unsigned: bool = False) -> bytes:
     |     If True, will encode as uint16_t.
     |     Otherwise will encode as int16_t.
     """
-    return pack('H' if unsigned else 'h', value)
+    return pack(ENDIANESS + ('H' if unsigned else 'h'), value)
 
 
 
@@ -64,7 +66,7 @@ def decode_int32(value: bytes, *, unsigned: bool = False) -> Tuple[int]:
     |     If true, msg is interpreted as uint32_t.
     |     Otherwise interpreted as int32_t.
     """
-    return unpack('I' if unsigned else 'i', value)
+    return unpack(ENDIANESS + ('I' if unsigned else 'i'), value)
 
 def encode_int32(value: int, *, unsigned: bool = False) -> bytes:
     """Returns value encoded as bytes representing an int32_t (int) value, to send via. Serial.
@@ -76,7 +78,7 @@ def encode_int32(value: int, *, unsigned: bool = False) -> bytes:
     |     If True, will encode as uint32_t.
     |     Otherwise will encode as int32_t.
     """
-    return pack('I' if unsigned else 'i', value)
+    return pack(ENDIANESS + ('I' if unsigned else 'i'), value)
 
 
 
@@ -91,7 +93,7 @@ def decode_char(value: bytes, *, unsigned: bool = False) -> Tuple[int]:
     |     If true, msg is interpreted as unsigned char.
     |     Otherwise interpreted as signed char.
     """
-    return unpack('B' if unsigned else 'b', value)
+    return unpack(ENDIANESS + ('B' if unsigned else 'b'), value)
 
 def encode_char(value: int, *, unsigned: bool = False) -> bytes:
     """Returns value encoded as bytes representing a char value, to send via. Serial.
@@ -103,7 +105,7 @@ def encode_char(value: int, *, unsigned: bool = False) -> bytes:
     |     If True, will encode as unsigned char.
     |     Otherwise will encode as signed char.
     """
-    return pack('B' if unsigned else 'b', value)
+    return pack(ENDIANESS + ('B' if unsigned else 'b'), value)
 
 
 
