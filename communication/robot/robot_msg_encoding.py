@@ -3,9 +3,19 @@
 """
 from typing import Tuple, Dict
 
-import sys, os; sys.path.append(os.path.dirname(__file__))
+##################
+###   CUSTOM   ###
+### LIBRARIES  ###
+##################
+## == Expose them ==
+import sys, os; sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from ..serial_base import encode_float, encode_int16, encode_int32, encode_char
+## == Import them ==
+from communication.serial_base import encode_float, encode_int16, encode_int32, encode_char
+
+## == Cleanup ==
+sys.path.pop()
+
 
 
 ##################

@@ -1,12 +1,9 @@
 """Script to start server.
 
 """
-import zmq
-
 import sys, os; sys.path.append(os.path.dirname(__file__))
 
-from .robot_class    import Robot
-from ..serial_class  import NewSerial
+from robot_class    import Robot
 from ..zmq_setup     import get_publisher, get_server
 from ..serial_base   import setup_serial
 

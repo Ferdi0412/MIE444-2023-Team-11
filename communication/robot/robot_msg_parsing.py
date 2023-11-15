@@ -3,9 +3,19 @@
 """
 from typing import Tuple, Dict
 
-import sys, os; sys.path.append(os.path.dirname(__file__))
+##################
+###   CUSTOM   ###
+### LIBRARIES  ###
+##################
+## == Expose them ==
+import sys, os; sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from ..serial_base import decode_float, decode_int16, decode_int32, decode_char
+## == Import them ==
+from communication.serial_base import decode_float, decode_int16, decode_int32, decode_char
+
+## == Cleanup ==
+sys.path.pop()
+
 
 
 #################
@@ -14,7 +24,7 @@ from ..serial_base import decode_float, decode_int16, decode_int32, decode_char
 #################
 def is_motor_ack(msg: bytes) -> bool:
     """Returns True if message is of type motor_ack."""
-    return msg[0] == b'M'
+    return msg[0:1] == b'M'
 
 def parse_motor_ack(msg: bytes) -> Tuple[bytes, float]:
     """Unpack/parse motor acknowledge movement.
@@ -25,7 +35,7 @@ def parse_motor_ack(msg: bytes) -> Tuple[bytes, float]:
     |- 2: last_pos <float>
     |      This is the progress along the latest move of the motor.
     """
-    motor_id = msg[1]
+    motor_id = msg[1:2]
     last_pos = decode_float(msg[2:6])[0]
     return motor_id, last_pos
 
@@ -33,7 +43,7 @@ def parse_motor_ack(msg: bytes) -> Tuple[bytes, float]:
 
 def is_motor_stop_ack(msg: bytes) -> bool:
     """Returns True if message is of type motor_stop_ack."""
-    return msg[0] == b'S'
+    return msg[0:1] == b'S'
 
 def parse_motor_stop_ack(msg: bytes) -> Tuple[bytes, float]:
     """Unpack/parse motor STOP acknowledge movement.
@@ -44,7 +54,7 @@ def parse_motor_stop_ack(msg: bytes) -> Tuple[bytes, float]:
     |- 2: last_pos <float>
     |      This is the progress along the latest move of the motor.
     """
-    motor_id = msg[1]
+    motor_id = msg[1:2]
     last_pos = decode_float(msg[2:6])[0]
     return motor_id, last_pos
 
@@ -52,7 +62,7 @@ def parse_motor_stop_ack(msg: bytes) -> Tuple[bytes, float]:
 
 def is_motor_active_msg(msg: bytes) -> bool:
     """Returns True if message is of type motor_moving."""
-    return msg[0] == b'A'
+    return msg[0:1] == b'A'
 
 def parse_motor_active(msg: bytes) -> Tuple[bytes, bool]:
     """Unpacks/parses motor moving state message.
@@ -61,7 +71,7 @@ def parse_motor_active(msg: bytes) -> Tuple[bytes, bool]:
     |- 1: motor_id <bytes>
     |- 2: is_active <bool>
     """
-    motor_id  = msg[1]
+    motor_id  = msg[1:2]
     is_active = bool(decode_char(msg[2])[0])
     return motor_id, is_active
 
@@ -69,7 +79,7 @@ def parse_motor_active(msg: bytes) -> Tuple[bytes, bool]:
 
 def is_motor_pos_msg(msg: bytes) -> bool:
     """Returns True if message is of type motor_pos."""
-    return msg[0] == b'P'
+    return msg[0:1] == b'P'
 
 def parse_motor_pos(msg: bytes) -> Tuple[bytes, float]:
     """Unpack/parse the position of a motor.
@@ -78,7 +88,7 @@ def parse_motor_pos(msg: bytes) -> Tuple[bytes, float]:
     |- 1: motor_id <bytes>
     |- 2: motor_pos <float>
     """
-    motor_id  = msg[1]
+    motor_id  = msg[1:2]
     motor_pos = decode_float(msg[2:6])[0]
     return motor_id, motor_pos
 
@@ -86,7 +96,7 @@ def parse_motor_pos(msg: bytes) -> Tuple[bytes, float]:
 
 def is_ultrasonic(msg: bytes) -> bool:
     """Returns True if message is an ultrasonics message from the robot."""
-    return msg[0] == b'U'
+    return msg[0:1] == b'U'
 
 def parse_ultrasonics(msg: bytes) -> Dict[bytes, float]:
     """Unpack/parse the readings from the ultrasonic sensors.
@@ -100,7 +110,7 @@ def parse_ultrasonics(msg: bytes) -> Dict[bytes, float]:
         start = i * 4 + 1
         end   = (i + 1) * 4 + 1
         ## Get ID and reading of sensor
-        sensor_id = us_count[start]
+        sensor_id = us_count[start:start+1]
         reading   = decode_float( msg[start+1:end] )[0]
         ## Add to dictionary of readings
         readings[ sensor_id ] = reading
@@ -110,7 +120,7 @@ def parse_ultrasonics(msg: bytes) -> Dict[bytes, float]:
 
 def is_gyroscope(msg: bytes) -> bool:
     """Returns True if message is a gyroscope message from the robot."""
-    return msg[0] == 'G'
+    return msg[0:1] == 'G'
 
 def parse_gyroscope(msg: bytes) -> Dict[bytes, float]:
     """Unpacks/parses readings from gyroscope.
@@ -124,7 +134,7 @@ def parse_gyroscope(msg: bytes) -> Dict[bytes, float]:
         start = i * 4 + 1
         end   = (i + 1) * 4 + 1
         ## Get ID of measurement, and newest reading
-        sensor_id = us_count[start]
+        sensor_id = us_count[start:start+1]
         reading   = decode_float( msg[start+1:end] )[0]
         ## Add to dictionary of readings
         readings[ sensor_id ] = reading
