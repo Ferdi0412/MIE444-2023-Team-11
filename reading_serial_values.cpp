@@ -1,5 +1,49 @@
-char read_char(Stream &serialport, char* target) {
-  /*Assigns value read from some serial connection to target. Returns 0 if successful.
+// ===== INCLUDE THE FOLLOWING #define LINES =====
+#define READ_COUNT(err_code) ((err_code) - 1)
+#define READ_RETRIES 2
+
+/* CONVOLUDED, use only if confident in C.
+
+// == CODE EXAMPLE ==
+int *val;
+int err_code;
+if ( err_code = read_bytes(SerialInput, (char*) val, sizeof(int)) ) {
+  // Printing number of bytes read...
+  SerialOutput.print("Failed to read <INT>! ");
+  SerialOutput.print(READ_COUNT(err_code));
+  SerialOutput.print(" of ");
+  SerialOutput.print(sizeof(int));
+  SerialOutput.print(" bytes read!");
+
+  // Printing characters read
+  for ( int i = 0; i < READ_COUNT(err_code); i++ ) {
+    SerialOutput.print("Byte [");
+    SerialOutput.print(i);
+    SerialOutput.print("] := ");
+    SerialOutput.println(val[i]);
+  }
+  else {
+    SerialOutput.print("Read value: ");
+    SerialOutput.println(*val);
+  }
+}
+
+*/
+int read_bytes(Stream &serialport, char* target, int bytes_to_read) {
+  for ( int i = 0; i < bytes_to_read; i++ ) {
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      if ( serialport.available() ) {
+        target[i] = serialport.read();
+        break;
+      }
+      else if ( j = READ_RETRIES - 1)
+        return i + 1;
+    }
+  }
+  return 0;
+}
+
+/*Assigns value read from some serial connection to target. Returns 0 if successful.
 
   To get value, do the following:
   // == CODE EXAMPLE ==
@@ -13,20 +57,22 @@ char read_char(Stream &serialport, char* target) {
     Serial.println(val);
   }
   */
-  if ( serialport.available() )
-    *target = serialport.read();
-  else
-    return -1;
-  return 0;
+char read_char(Stream &serialport, char* target) {
+  for ( int j = 0; j < READ_RETRIES; j++ ) {
+    if ( serialport.available() ) {
+      *target = serialport.read();
+      return 0;
+    }
+  }
+  return -1;
 }
 
-char read_short(Stream &serialport, short* target) {
-  /*Assigns value read from some serial connection to target. Returns 0 if successful.
+/*Assigns value read from some serial connection to target. Returns 0 if successful.
 
   To get value, do the following:
   // == CODE EXAMPLE ==
   short val;
-  if ( read_short(Serial, & val ) {
+  if ( read_short(Serial, & val, NULL ) {
     // Invalid input from Serial...
   }
   else {
@@ -35,14 +81,24 @@ char read_short(Stream &serialport, short* target) {
     Serial.println(val);
   }
   */
-  short val;
+int read_short(Stream &serialport, short* target) {
+  short val = 0;
+  char  readable_flag;
   // Read required number of bytes...
   for ( int i = 0; i < sizeof(short); i++ ) {
-    if ( serialport.available() )
+    readable_flag = 0;
+    // Allow retries, incase bytes aren't immediately available
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      if ( serialport.available() ) {
+        readable_flag = 1;
+        break;
+      }
+    }
+    if ( readable_flag )
       ((char *) &val)[i] = serialport.read();
-    // If too few bytes in serial, return -1
+    // Allow failed to read bytes to be returned
     else
-      return -1;
+      return i + 1;
   }
   // Assign value to target pointer
   *target = val;
@@ -50,13 +106,12 @@ char read_short(Stream &serialport, short* target) {
   return 0;
 }
 
-char read_int(Stream &serialport, int* target) {
-  /*Assigns value read from some serial connection to target. Returns 0 if successful.
+/*Assigns value read from some serial connection to target. Returns 0 if successful.
 
   To get value, do the following:
   // == CODE EXAMPLE ==
   int val;
-  if ( read_int(Serial, & val ) {
+  if ( read_int(Serial, & val, NULL ) {
     // Invalid input from Serial...
   }
   else {
@@ -65,14 +120,25 @@ char read_int(Stream &serialport, int* target) {
     Serial.println(val);
   }
   */
-  int val;
+int read_int(Stream &serialport, int* target) {
+  int  val;
+  char readable_flag = 0;
   // Read required number of bytes...
   for ( int i = 0; i < sizeof(int); i++ ) {
-    if ( serialport.available() )
+    // Indicate that no byte readable yet...
+    readable_flag = 0;
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      // If value could be read,
+      if ( serialport.available() ) {
+        readable_flag = 1;
+        break;
+      }
+    }
+    if ( readable_flag )
       ((char *) &val)[i] = serialport.read();
     // If too few bytes in serial, return -1
     else
-      return -1;
+      return i+1; // Return natural number (ie. index + i) of character that failed to read...
   }
   // Assign value to target pointer
   *target = val;
@@ -80,13 +146,12 @@ char read_int(Stream &serialport, int* target) {
   return 0;
 }
 
-char read_long(Stream &serialport, long* target) {
-  /*Assigns value read from some serial connection to target. Returns 0 if successful.
+/*Assigns value read from some serial connection to target. Returns 0 if successful.
 
   To get value, do the following:
   // == CODE EXAMPLE ==
   long val;
-  if ( read_long(Serial, & val ) {
+  if ( read_long(Serial, & val, NULL ) {
     // Invalid input from Serial...
   }
   else {
@@ -95,14 +160,24 @@ char read_long(Stream &serialport, long* target) {
     Serial.println(val);
   }
   */
-  long val;
+char read_long(Stream &serialport, long* target) {
+  long val = 0;
+  char readable_flag;
   // Read required number of bytes...
   for ( int i = 0; i < sizeof(long); i++ ) {
-    if ( serialport.available() )
+    readable_flag = 0;
+    // Allow retries, incase bytes aren't immediately available
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      if ( serialport.available() ) {
+        readable_flag = 1;
+        break;
+      }
+    }
+    if ( readable_flag )
       ((char *) &val)[i] = serialport.read();
-    // If too few bytes in serial, return -1
+    // Allow failed to read bytes to be returned
     else
-      return -1;
+      return i + 1;
   }
   // Assign value to target pointer
   *target = val;
@@ -110,13 +185,12 @@ char read_long(Stream &serialport, long* target) {
   return 0;
 }
 
-char read_float(Stream serialport, float* target) {
-  /*Assigns value read from some serial connection to target. Returns 0 if successful.
+/*Assigns value read from some serial connection to target. Returns 0 if successful.
 
   To get value, do the following:
   // == CODE EXAMPLE ==
   float val;
-  if ( read_float(Serial, & val ) {
+  if ( read_float(Serial, & val, NULL ) {
     // Invalid input from Serial...
   }
   else {
@@ -125,14 +199,24 @@ char read_float(Stream serialport, float* target) {
     Serial.println(val);
   }
   */
-  float val;
+char read_float(Stream &serialport, float* target) {
+  float val = 0;
+  char  readable_flag;
   // Read required number of bytes...
   for ( int i = 0; i < sizeof(float); i++ ) {
-    if ( serialport.available() )
+    readable_flag = 0;
+    // Allow retries, incase bytes aren't immediately available
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      if ( serialport.available() ) {
+        readable_flag = 1;
+        break;
+      }
+    }
+    if ( readable_flag )
       ((char *) &val)[i] = serialport.read();
-    // If too few bytes in serial, return -1
+    // Allow failed to read bytes to be returned
     else
-      return -1;
+      return i + 1;
   }
   // Assign value to target pointer
   *target = val;
