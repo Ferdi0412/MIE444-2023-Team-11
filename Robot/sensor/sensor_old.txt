@@ -16,7 +16,7 @@ int llsensorEcho = A0;
 unsigned int time[7];
 int distance[7];
 
-SoftwareSerial espSerial (14/*rx*/, 15/*tx*/);
+SoftwareSerial motorSerial (2/*rx*/, 3/*tx*/);
 
 // To allow for string-type handling...
 
@@ -25,12 +25,8 @@ void setup() {
   distance[6] = 0;
 
   // put your setup code here, to run once:
-  espSerial.begin(9600);
   Serial.begin(9600);
-  Serial1.begin(9600);
-  Serial2.begin(9600);
-  Serial3.begin(9600);
-
+  motorSerial.begin(9600);
   pinMode(flsensorTrig, OUTPUT);
   pinMode(frsensorTrig, OUTPUT);
   pinMode(rrsensorTrig, OUTPUT);
@@ -75,18 +71,11 @@ void setup() {
   
   // Serial.print("back: ");
   // Serial.println(distance[3]);
-  
-  //if(Serial.available()){
-  //  if(Serial.read()=='a'){
-  //  Serial1.write('b');
-  //  Serial.write('b');
-  //  }
-  //}
-  if ( espSerial.available() ) {
-    char cmd = espSerial.read();
-    //Serial.println(cmd);
+
+  if ( Serial.available() ) {
+    char cmd = Serial.read();
     switch ( cmd ) {
-      /*case 'u':
+      case 'u':
         Serial.print(String(distance[0]));
         Serial.print(";");
         Serial.print(String(distance[1]));
@@ -97,18 +86,15 @@ void setup() {
         Serial.print(";");
         Serial.println(String(distance[4]));
         break;
-      */
-      case 'M':
-        char motor_id = espSerial.read();
-        write_to_motor(motor_id);
+      
+      default:
+        motorSerial.write(cmd);
         break;
-      //default:
-      //  motorSerial.write(cmd);
-      //  break;
 
     }
   }
-  delay(10);
+
+  delay(100);
 }
 
 unsigned int SensorPulseDuration(int trigPin,int echoPin){
@@ -120,29 +106,4 @@ delayMicroseconds(10);
 digitalWrite(trigPin, LOW);
 duration = pulseIn(echoPin, HIGH, 30000);
 return duration;
-}
-
-void write_to_motor(char id) {
-	switch (id) {
-		case '1':
-			//write(Serial);
-      break;
-    case '2':
-      write(Serial1);
-      break;
-    case '3':
-      write(Serial2);
-      break;
-    case '4':
-      write(Serial3);
-      break;
-  }
-}
-
-void write(Stream &s){
-  s.write('M');
-        for (int i = 0; i < 8; i ++ ) {
-    		s.write(espSerial.read());
-        //Serial.write(espSerial.read());
-        }
 }
