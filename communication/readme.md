@@ -164,8 +164,8 @@ When going to/from robot, use single byte/char to indicate target.
 | :----: | :----------: | :---------------- |
 | M      | [1]: ID; [2, 5]: Position \<float>; [6, 9]: Speed \<float>; | Movement command (used for both MOVE and ROTATE). To simplify, send a message to each motor seperately.              |
 | S      | NA           | Stop.             |
-| P      | NA           | Fetch Progress.   |
-| A      | NA           | "Active" - IN-MOTION. |
+| P      | [1]: ID;     | Fetch Progress.   |
+| A      | [1]: ID;     | "Active" - IN-MOTION. |
 | L      | [1]: On/Off; | Turn LED on/off.  |
 
 **Sensors**
