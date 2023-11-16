@@ -20,6 +20,8 @@ float v1Filt = 0;
 float v1Prev = 0;
 float v2Filt = 0;
 float v2Prev = 0;
+int target_speed = 0;
+int direction_input = -1;
 
 float eintegral = 0;
 
@@ -32,11 +34,11 @@ void setup() {
   pinMode(IN1,OUTPUT);
   pinMode(IN2,OUTPUT);
 
-  attachInterrupt(digitalPinToInterrupt(ENCA),
-                  readEncoder,RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCA),readEncoder,RISING);
 }
 
 void loop() {
+
 
   // read the position in an atomic block
   // to avoid potential misreads
@@ -76,7 +78,7 @@ void loop() {
   float u = kp*e + ki*eintegral;
 
   // Set the motor speed and direction
-  //receieve input speed and distance, move to that, ideally receive progress (how far are you from reaching the target distance), accept a stop command 
+  //receieve input speed (target speed) and distance (speed * time), move to that, ideally receive progress (how far are you from reaching the target distance), accept a stop command 
 
   int dir = -1;
   /*
