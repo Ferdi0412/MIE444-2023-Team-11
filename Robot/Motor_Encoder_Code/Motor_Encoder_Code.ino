@@ -1,5 +1,72 @@
 #include <util/atomic.h>
 
+// ===== INCLUDE THE FOLLOWING #define LINES =====
+#define READ_COUNT(err_code) ((err_code) - 1)
+#define READ_RETRIES 2
+
+int read_char(Stream &serialport, char* target) {
+  for ( int j = 0; j < READ_RETRIES; j++ ) {
+    if ( serialport.available() ) {
+      *target = serialport.read();
+      return 0;
+    }
+  }
+  return -1;
+}
+
+int read_int(Stream &serialport, int* target) {
+  int  val;
+  char readable_flag = 0;
+  // Read required number of bytes...
+  for ( int i = 0; i < sizeof(int); i++ ) {
+    // Indicate that no byte readable yet...
+    readable_flag = 0;
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      // If value could be read,
+      if ( serialport.available() ) {
+        readable_flag = 1;
+        break;
+      }
+    }
+    if ( readable_flag )
+      ((char *) &val)[i] = serialport.read();
+    // If too few bytes in serial, return -1
+    else
+      return i+1; // Return natural number (ie. index + i) of character that failed to read...
+  }
+  // Assign value to target pointer
+  *target = val;
+  // Return 0
+  return 0;
+}
+
+char read_float(Stream &serialport, float* target) {
+  float val = 0;
+  char  readable_flag;
+  // Read required number of bytes...
+  for ( int i = 0; i < sizeof(float); i++ ) {
+    readable_flag = 0;
+    // Allow retries, incase bytes aren't immediately available
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      if ( serialport.available() ) {
+        readable_flag = 1;
+        break;
+      }
+    }
+    if ( readable_flag )
+      ((char *) &val)[i] = serialport.read();
+    // Allow failed to read bytes to be returned
+    else
+      return i + 1;
+  }
+  // Assign value to target pointer
+  *target = val;
+  // Return 0
+  return 0;
+}
+
+/* ======= EMMA's SECTION ========== */
+
 // Pins
 #define ENCA 2
 #define ENCB 3
@@ -38,7 +105,7 @@ void setup() {
 }
 
 void loop() {
-
+  
 
   // read the position in an atomic block
   // to avoid potential misreads

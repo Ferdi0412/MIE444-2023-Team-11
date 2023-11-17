@@ -1,5 +1,86 @@
 #include <util/atomic.h>
 
+/* ======= SERIAL READING ======= */
+#define READ_COUNT(err_code) ((err_code) - 1)
+#define READ_RETRIES 2
+char identifier = -1;
+
+char write_buffer[1024];
+
+char read_char(Stream &serialport, char* target) {
+  for ( int j = 0; j < READ_RETRIES; j++ ) {
+    if ( serialport.available() ) {
+      *target = serialport.read();
+      return 0;
+    }
+  }
+  return -1;
+}
+
+void write_position_msg(char target_id) {
+  write_buffer[0] = target_id;
+  write_buffer[1] = identifier;
+  assign_position( &(write_buffer[2]) );
+  write_buffer[4] = '\n';
+  Serial.write(write_buffer, 5);
+}
+
+int read_int(Stream &serialport, int* target) {
+  int  val;
+  char readable_flag = 0;
+  // Read required number of bytes...
+  for ( int i = 0; i < sizeof(int); i++ ) {
+    // Indicate that no byte readable yet...
+    readable_flag = 0;
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      // If value could be read,
+      if ( serialport.available() ) {
+        readable_flag = 1;
+        break;
+      }
+    }
+    if ( readable_flag )
+      ((char *) &val)[i] = serialport.read();
+    // If too few bytes in serial, return -1
+    else
+      return i+1; // Return natural number (ie. index + i) of character that failed to read...
+  }
+  // Assign value to target pointer
+  *target = val;
+  // Return 0
+  return 0;
+}
+
+char read_float(Stream &serialport, float* target) {
+  float val = 0;
+  char  readable_flag;
+  // Read required number of bytes...
+  for ( int i = 0; i < sizeof(float); i++ ) {
+    readable_flag = 0;
+    // Allow retries, incase bytes aren't immediately available
+    for ( int j = 0; j < READ_RETRIES; j++ ) {
+      if ( serialport.available() ) {
+        readable_flag = 1;
+        break;
+      }
+    }
+    if ( readable_flag )
+      ((char *) &val)[i] = serialport.read();
+    // Allow failed to read bytes to be returned
+    else
+      return i + 1;
+  }
+  // Assign value to target pointer
+  *target = val;
+  // Return 0
+  return 0;
+}
+
+
+
+
+/* ======= MOTOR CONTROL SETUP ========== */
+
 // Pins
 #define ENCA 2
 #define ENCB 3
@@ -16,6 +97,8 @@ volatile int pos_i = 0;
 volatile float velocity_i = 0;
 volatile long prevT_i = 0;
 int setpos = 3000;
+
+int target_pos = 0;
 
 float v1Filt = 0;
 float v1Prev = 0;
@@ -37,22 +120,23 @@ void setup() {
 }
 
 void loop() {
-  delay(1);
-  char letter = Serial.read();
-  switch (letter){
-    case ('x'):
-    target_speed = 0.001;
-    direction_input = -1;
-          break;  
-    case ('t'):
-        target_speed = 70;
-        direction_input = -1;
-      break; 
-    case ('a'):
-        target_speed = 20;
-        direction_input = -1;
-      break;   
-  }
+  recieve_cmd();
+  // delay(1);
+  // char letter = Serial.read();
+  // switch (letter){
+  //   case ('x'):
+  //   target_speed = 0.001;
+  //   direction_input = -1;
+  //         break;  
+  //   case ('t'):
+  //       target_speed = 70;
+  //       direction_input = -1;
+  //     break; 
+  //   case ('a'):
+  //       target_speed = 20;
+  //       direction_input = -1;
+  //     break;   
+  // }
 
   // read the position in an atomic block
   // to avoid potential misreads
@@ -60,6 +144,11 @@ void loop() {
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
     pos = pos_i;
     
+  }
+
+  // Stop moving at/past target
+  if ( pos >= target_pos ) {
+    target_speed = 0;
   }
   Serial.println(pos);
   /*
@@ -99,16 +188,13 @@ void loop() {
   //receieve input speed (target speed) and distance (speed * time), move to that, ideally receive progress (how far are you from reaching the target distance), accept a stop command 
 
   int dir = direction_input;
-  /*
   if (u<0){
     dir = -1;
   }
-  */
 
   int pwr = (int) fabs(u);
   if(pwr > 255){
     pwr = 255;
-    
   }
   
   setMotor(dir,pwr,PWM,IN1,IN2);
@@ -150,8 +236,91 @@ void readEncoder(){
   }
   else{
     // Otherwise, increment backward
-    increment = -1;
+    increment = 1; // -1
   }
   pos_i = pos_i + increment;
 
+}
+
+
+
+void recieve_cmd(){
+  if (Serial.available()){
+    char byte_0 = Serial.read();
+    // Serial.print("Responding to ");
+    // Serial.println(byte_0);
+
+    switch ( byte_0 ) {
+    
+      // Movement command
+      case 'M': {
+        Serial.println("Valid move!");
+        char motor_id; int new_pos; float new_speed;
+        if ( read_char(Serial, &motor_id) )
+          break;
+        Serial.println("Nice ID");
+        if ( read_int(Serial, &new_pos) )
+          break;
+        Serial.println("Now for the SPEED!!!");
+        if ( read_float(Serial, &new_speed) )
+          break;
+        write_position_msg('M');
+        Serial.println("Valid movement command!");
+        Serial.print("Travelling at speed ");
+        Serial.print(new_speed);
+        Serial.print("; To pulse ");
+        Serial.println(new_pos);
+        target_pos = (fabs(new_pos) < 60) ? new_pos : 60;
+        // Reset position...
+        posPrev = 0;
+        target_speed = new_speed;
+        direction_input = 1;
+        setMotor(1, 100, PWM, IN1, IN2);
+        break;
+      }
+
+        // Stop command
+        case 'S': {
+          write_position_msg('S');
+          target_pos = 0;
+          target_speed = 0.01;
+          setMotor(1, 0, PWM, IN1, IN2);
+          // Immediately stop motion?
+          // digitalWrite(PWM, LOW);
+          break;
+        }
+
+      case 'P': {
+        write_position_msg('P');
+        break;
+      }
+      
+      case 'A': {
+        write_buffer[0] = 'A';
+        write_buffer[1] = identifier;
+        write_buffer[2] = (char) (target_pos > posPrev);
+        write_buffer[3] = '\n';
+        Serial.write(write_buffer, 4);
+        break;
+      }
+      
+      case 'X': {
+        char new_id;
+        if ( read_char(Serial, &new_id) )
+          break;
+        identifier = new_id;
+        break;
+      }
+      
+      default: {
+        // Serial.println("Unrecognizable command!");
+        break;
+      }
+    }
+  }
+  delay(100);
+}
+
+void assign_position(char* buffer) {
+  *((int*) buffer) = posPrev;
 }

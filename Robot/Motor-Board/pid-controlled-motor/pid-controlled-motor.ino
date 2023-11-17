@@ -192,6 +192,10 @@ void setMotor(int dir, int pwmVal, int pwm, int in1, int in2){
     digitalWrite(in1,LOW);
     digitalWrite(in2,LOW);    
   }
+
+  Serial.println(v1Filt);
+
+  Serial.println(vt);
 }
 
 void readEncoder(){
@@ -248,7 +252,7 @@ void recieve_cmd(){
         case 'S': {
           write_position_msg('S');
           target_pos = 0;
-          vt = 0;
+          vt = 0.001;
           setMotor(1, 0, PWM, IN1, IN2);
           // Immediately stop motion?
           // digitalWrite(PWM, LOW);
