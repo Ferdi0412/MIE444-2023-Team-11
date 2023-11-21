@@ -7,10 +7,10 @@ Requires pyserial library...
 """
 
 from serial    import Serial
-from struct    import unpack, pack
+from struct    import unpack, pack, error as EncodingError
 from typing    import Tuple
 
-ENDIANESS = '>'
+ENDIANESS = '<' ## ENDIANESS of ESP32...
 
 def setup_serial(port: str, timeout: float = None):
     """

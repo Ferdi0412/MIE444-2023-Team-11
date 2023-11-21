@@ -9,6 +9,7 @@ PUBLISHER_PORT = 3001
 ROUTER_PORT    = 3002
 
 import zmq
+from   zmq import Again as ZmqTimeout
 from threading import Thread
 
 def get_subscriber(*, timeout: int = None) -> zmq.Socket:

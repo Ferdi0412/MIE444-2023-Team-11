@@ -1,6 +1,7 @@
 import os, sys; sys.path.append(os.path.dirname(__file__));
 
-from serial_functions import *
+from custom_robot       import *
+# from serial_functions import *
 # from simmer_functions import *
 
 import pygame
@@ -135,17 +136,21 @@ while True:
     pygame.draw.rect(screen, wheel_col, wheel_outline)
     pygame.draw.polygon(screen, robot_col, robot_outline, 0)
 
-    # Draw ultrasonic sensor representations
-    newest_readings = get_ultrasonics()
-    for i, us in enumerate(ultrasonics.values()):
-        us.append(newest_readings[i])
-        us.draw()
 
-    diff = f"{ultrasonics['u1'].latest() - ultrasonics['u2'].latest():.1f}"
-    txt = text_font.render(diff, True, (0, 0, 0), (255, 255, 255))
-    txt_rect = txt.get_rect()
-    txt_rect.center = (x0, y0)
-    screen.blit(txt, txt_rect)
+    try:
+        # Draw ultrasonic sensor representations
+        newest_readings = get_ultrasonics()
+        for i, us in enumerate(ultrasonics.values()):
+            us.append(newest_readings[i])
+            us.draw()
+
+        diff = f"{ultrasonics['u1'].latest() - ultrasonics['u2'].latest():.1f}"
+        txt = text_font.render(diff, True, (0, 0, 0), (255, 255, 255))
+        txt_rect = txt.get_rect()
+        txt_rect.center = (x0, y0)
+        screen.blit(txt, txt_rect)
+    except:
+        pass
 
     # Update the display
     pygame.display.flip()

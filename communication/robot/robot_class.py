@@ -66,7 +66,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 ## == Import them ==
 from communication.serial_class  import NewSerial, MaxRetries
-from communication.serial_base   import decode_char, decode_float, decode_int16, decode_int32
+from communication.serial_base   import decode_float#, decode_char, decode_int16, decode_int32
 
 ## == Cleanup ==
 sys.path.pop()
@@ -76,7 +76,7 @@ sys.path.pop()
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 ## == Import them ==
-from robot.robot_msg_encoding import encode_motor_set, encode_motor_stop, encode_active, encode_pos
+from robot.robot_msg_encoding import encode_motor_set, encode_led# , encode_motor_stop, encode_active, encode_pos
 from robot_msg_parsing        import is_ultrasonic, parse_ultrasonics
 
 ## == Cleanup ==
@@ -228,6 +228,11 @@ class Robot (NewSerial):
         msg = encode_move(fwd, right, speed = speed)
         return self._motor_msg(b'M', msg, silence_error=silence_error)
 
+    def rotate(self, angle: float, *, silence_error: bool = False) -> Dict[bytes, float]:
+        """Send rotate command via. Serial connection."""
+        msg = encode_rotate(angle)
+        return self._motor_msg(b'M', msg, silence_error=silence_error)
+
 
     def stop(self, *, silence_error: bool = False) -> Dict[bytes, float]:
         """Sends stop command via. Serial connection."""
@@ -260,3 +265,7 @@ class Robot (NewSerial):
             assert all(usid in returned_values.keys() for usid in ULTRASONICS)
 
         return returned_values
+
+    def led(self, state: bool) -> None:
+        """Turn LED on/off."""
+        self.send(encode_led(state))

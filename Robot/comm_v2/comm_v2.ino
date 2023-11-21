@@ -1,6 +1,6 @@
 #include "BluetoothSerial.h"
 
-// #define LED 2
+#define LED 2
 
 BluetoothSerial ComputerBT;
 
@@ -10,21 +10,25 @@ BluetoothSerial ComputerBT;
 void setup() {
   // put your setup code here, to run once:
   // Serial.begin(9600);
+  // ComputerBT.begin("Team-11-Stripeless");
   ComputerBT.begin("Team-11-White-Stripe");
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
-  // pinMode(LED, OUTPUT);
+  pinMode(LED, OUTPUT);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if ( ComputerBT.available() ) {
-        Serial2.write( ComputerBT.read() );
-        // digitalWrite(LED, HIGH);
+  // Purely for displaying stuff... Remove later
+  delay(200);
+  digitalWrite(LED, LOW);
+
+  while ( ComputerBT.available() ) {
+    digitalWrite(LED, HIGH);
+    Serial2.write( ComputerBT.read() );
   }
 
-  
-  if ( Serial2.available() ) {
+  while ( Serial2.available() ) {
+    digitalWrite(LED, HIGH);
     ComputerBT.write( Serial2.read() );
-    // digitalWrite(LED, HIGH);
   }
 }

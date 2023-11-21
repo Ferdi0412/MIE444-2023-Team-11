@@ -1,4 +1,4 @@
-COM = "COM11"
+COM = "COM9"
 
 import serial
 
@@ -46,4 +46,13 @@ def get_ultrasonics():
     recv_raw = receive()
     recv_raw = recv_raw.decode('ascii')
     recv = recv_raw.replace('\r', '').replace('\n', '')
+    return [0, 0, 0, 0, 0]
     return [int(val) for val in recv.split(';')]
+
+if __name__ == '__main__':
+    print("Now in main...")
+    ser.read_all()
+    print("Writing now...")
+    ser.write(b'I\x00\x00\x00\x00')
+    print("Reading now...")
+    print(ser.read())
