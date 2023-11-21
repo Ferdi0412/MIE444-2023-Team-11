@@ -11,7 +11,7 @@ char write_buffer[1024];
 /* ======= MOTOR PINS ========== */
 // Motor
 #define PPR     420 /* Pulses per revolution */
-#define MAX_RPM 60
+#define MAX_RPM 100
 
 // PID
 #define KP 1
@@ -53,9 +53,10 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(ENCA), encoder_increment, RISING);
 
-  target_speed    = 10;
-  target_pos      = 500;
-  direction_input = 1;
+  // TODO: Remove this...
+  // target_pos      = 10000;
+  // target_speed    = 100;
+  // direction_input = 1;
 }
 
 /* ======= MAIN ========== */
@@ -163,7 +164,7 @@ void receive_cmd(){
         // Stop command
         case 'S': {
           write_position_msg('S');
-          target_pos = 0; target_speed = 0.01;
+          target_pos = 0; target_speed = 0.01; direction_input = 0;
           set_motor_state(0, 0);
           // Immediately stop motion?
           // digitalWrite(PWM, LOW);
