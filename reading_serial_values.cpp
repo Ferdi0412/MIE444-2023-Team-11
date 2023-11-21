@@ -1,6 +1,7 @@
 // ===== INCLUDE THE FOLLOWING #define LINES =====
 #define READ_COUNT(err_code) ((err_code) - 1)
 #define READ_RETRIES 2
+#define READ_DELAY   2
 
 /* CONVOLUDED, use only if confident in C.
 
@@ -63,6 +64,9 @@ char read_char(Stream &serialport, char* target) {
       *target = serialport.read();
       return 0;
     }
+    #ifdef READ_DELAY
+      delay(READ_DELAY);
+    #endif
   }
   return -1;
 }
@@ -93,6 +97,9 @@ int read_short(Stream &serialport, short* target) {
         readable_flag = 1;
         break;
       }
+      #ifdef READ_DELAY
+        delay(READ_DELAY);
+      #endif
     }
     if ( readable_flag )
       ((char *) &val)[i] = serialport.read();
@@ -133,6 +140,9 @@ int read_int(Stream &serialport, int* target) {
         readable_flag = 1;
         break;
       }
+      #ifdef READ_DELAY
+        delay(READ_DELAY);
+      #endif
     }
     if ( readable_flag )
       ((char *) &val)[i] = serialport.read();
@@ -172,6 +182,9 @@ char read_long(Stream &serialport, long* target) {
         readable_flag = 1;
         break;
       }
+      #ifdef READ_DELAY
+        delay(READ_DELAY);
+      #endif
     }
     if ( readable_flag )
       ((char *) &val)[i] = serialport.read();
@@ -211,6 +224,9 @@ char read_float(Stream &serialport, float* target) {
         readable_flag = 1;
         break;
       }
+      #ifdef READ_DELAY
+        delay(READ_DELAY);
+      #endif
     }
     if ( readable_flag )
       ((char *) &val)[i] = serialport.read();
