@@ -8,6 +8,8 @@ char ultrasonic_buffer[128];
 #define M_CMD_DATA 9
 char motor_buffer[MOTOR_BUFFER_LEN];
 
+
+
 void forward_motor_move( Stream *bt_com, Stream *motor_com ) {
   // Subtract 2 as ID and target_type already read????
   if ( bt_com->available() < (M_CMD_DATA - 2) ) {
@@ -19,6 +21,8 @@ void forward_motor_move( Stream *bt_com, Stream *motor_com ) {
   bt_com->readBytes( &(motor_buffer[1]), M_CMD_DATA - 2 );
   motor_com->write( motor_buffer, M_CMD_DATA - 1 );
 }
+
+
 
 void forward_motor_reply( Stream *motor_com, Stream *bt_com ) {
   unsigned int bytes_to_send = motor_com->available();
@@ -33,19 +37,18 @@ void forward_motor_reply( Stream *motor_com, Stream *bt_com ) {
   bt_com->write(motor_buffer, bytes_to_send);
 }
 
+
+
 void set_motor_id(Stream *motor_com, char motor_id) {
   motor_buffer[0] = 'X';
   motor_buffer[1] = motor_id;
   motor_com->write(motor_buffer, 2);
 }
 
+
+
 void* get_motor_com ( char motor_id ) {
   switch ( motor_id ) {
-    case 0:
-      return (void*) &Serial;
-
-    case 1:
-      return (void*) &Serial1;
 
     case 2:
       return (void*) &Serial2;
@@ -89,10 +92,6 @@ void setup() {
 
   // put your setup code here, to run once:
   espSerial.begin(9600);
-  Serial.begin(9600);
-  set_motor_id(&Serial, 0);
-  Serial1.begin(9600);
-  set_motor_id(&Serial1, 1);
   Serial2.begin(9600);
   set_motor_id(&Serial2, 2);
   Serial3.begin(9600);
@@ -119,7 +118,19 @@ void setup() {
 
 
 void loop() {
-   //put your main code here, to run repeatedly:
+  sense();
+  
+  receive_bluetooth();
+
+  send_response(Serial2);
+  send_response(Serial3);
+  
+}
+
+
+
+void sense() {
+  //put your main code here, to run repeatedly:
   time[1] = SensorPulseDuration(frsensorTrig, frsensorEcho);
   delay(10);
   time[2] = SensorPulseDuration(rrsensorTrig, rrsensorEcho);
@@ -135,44 +146,22 @@ void loop() {
   distance[2] = time[2]*0.034*0.5;
   distance[3] = time[3]*0.034*0.5;
   distance[4] = time[4]*0.034*0.5;
-  
-  receive_bluetooth();
-
-  send_response(Serial);
-  send_response(Serial1);
-  send_response(Serial2);
-  send_response(Serial3);
-  
 }
+
+
 
 unsigned int SensorPulseDuration(int trigPin,int echoPin){
-unsigned int duration = 0;
-digitalWrite(trigPin, LOW);
-delayMicroseconds(2);
-digitalWrite(trigPin, HIGH);
-delayMicroseconds(10);
-digitalWrite(trigPin, LOW);
-duration = pulseIn(echoPin, HIGH, 30000);
-return duration;
+  unsigned int duration = 0;
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH, 30000);
+  return duration;
 }
 
-// Unused
-// void write_to_motor(char id) {
-// 	switch (id) {
-// 		case '1':
-// 			write(Serial);
-//       break;
-//     case '2':
-//       write(Serial1);
-//       break;
-//     case '3':
-//       write(Serial2);
-//       break;
-//     case '4':
-//       write(Serial3);
-//       break;
-//   }
-// }
+
 
 void write(Stream &s){
   s.write('M');
@@ -181,6 +170,8 @@ void write(Stream &s){
         //Serial.write(espSerial.read());
         }
 }
+
+
 
 void send_response(Stream &s) {
   while ( s.available() ) {
@@ -194,6 +185,8 @@ void send_response(Stream &s) {
     espSerial.write(motor_buffer, bytes_available);
   }
 }
+
+
 
 void receive_bluetooth() {
   while ( espSerial.available() ) {
@@ -224,8 +217,6 @@ void receive_bluetooth() {
 
       /* Stop motor command */
       case 'S': {
-        Serial.write('S');
-        Serial1.write('S');
         Serial2.write('S');
         Serial3.write('S');
         break;
@@ -248,8 +239,6 @@ void receive_bluetooth() {
       }
 
       case 'X': {
-        set_motor_id(&Serial, 0);
-        set_motor_id(&Serial1, 1);
         set_motor_id(&Serial2, 2);
         set_motor_id(&Serial3, 3);
         break;

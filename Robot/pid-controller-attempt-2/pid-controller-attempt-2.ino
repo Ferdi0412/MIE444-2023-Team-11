@@ -20,9 +20,9 @@ char write_buffer[1024];
 // Pins
 #define ENCA 2
 #define ENCB 3
-#define PWM 9
-#define IN1 8
-#define IN2 7
+#define PWM 6
+#define IN1 5
+#define IN2 4
 
 /* ======= MOTOR CONTROL SETUP ========== */
 // unsigned long prev_time = 0;
@@ -151,7 +151,7 @@ void receive_cmd(){
         // If successfully read all values, respond with position message begginning with 'M'
         write_position_msg('M');
         // If all values successfully read from message, act upon them; ALSO, enforce 60 RPM as max speed
-        target_pos   = new_pos; target_speed = (fabs(new_speed) < MAX_RPM) ? target_speed : MAX_RPM;
+        target_pos   = new_pos; target_speed = (fabs(new_speed) < MAX_RPM) ? fabs(new_speed) : MAX_RPM;
         direction_input = (new_speed >= 0) ? 1 : -1;
         // Reset position tracker
         pos_i = 0;
@@ -164,7 +164,7 @@ void receive_cmd(){
         // Stop command
         case 'S': {
           write_position_msg('S');
-          target_pos = 0; target_speed = 0.01; direction_input = 0;
+          target_pos = 0; target_speed = 0; direction_input = 0;
           set_motor_state(0, 0);
           // Immediately stop motion?
           // digitalWrite(PWM, LOW);
@@ -179,7 +179,7 @@ void receive_cmd(){
       case 'A': {
         write_buffer[0] = 'A';
         write_buffer[1] = identifier;
-        write_buffer[2] = (char) (target_pos > prev_pos);
+        write_buffer[2] = (char) ( 0 == target_speed );
         write_buffer[3] = '\n';
         Serial.write(write_buffer, 4);
         break;
