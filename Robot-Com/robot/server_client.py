@@ -35,6 +35,8 @@ class INVALID_PAR (Exception):
 class NEED_OWN (Exception):
     """You need to claim ownership before running this function."""
 
+CLIENT_EXCEPTION = (NO_CONNECTION, NEED_OWN, FAILED, SocketTimeout, INVALID_PAR, INVALID_REQ)
+
 ###########
 ### AUX ###
 ###########
@@ -46,7 +48,8 @@ def get_client(client_id: str, *, timeout: int = 3000) -> _zmq.Socket:
 
 def raise_client_errors(server_reply: bytes) -> str:
     """Raise errors based on server response. Also decodes values, for convenience ;)."""
-    match(server_reply):
+    server_reply_body = b'\n'.join(server_reply.split(b'\n')[1:])
+    match(server_reply_body):
         case _config.Response.FAILED:
             raise FAILED
 
@@ -63,7 +66,7 @@ def raise_client_errors(server_reply: bytes) -> str:
             raise INVALID_REQ
 
         case _:
-            return server_reply.decode('utf-8')
+            return server_reply_body.decode('utf-8')
 
 
 ##############
@@ -163,6 +166,7 @@ class Team_11_Client:
         """Get inch readings for values."""
         self._send( _config.Command.ULTRASONIC )
         reply = raise_client_errors(self._client.recv())
+        print("Reply: ", reply)
         return _json_loads(reply)
 
 

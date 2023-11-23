@@ -41,7 +41,7 @@ class Team_11_Server:
 
             print(f"Replying with {reply}")
 
-            self._server.send_multipart([requestor, reply])
+            self._server.send_multipart([requestor, msg_head + b'\n' + reply])
 
 
 

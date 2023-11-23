@@ -1,7 +1,9 @@
 """Package for working with Team 11's robot."""
 
 from .control_robot import NoMotorAck, SingleMotorAck, NoUltrasonics, Team_11_Robot
-from .server_client import get_client, Team_11_Client
+from .server_client import get_client, Team_11_Client, NO_CONNECTION, NEED_OWN, FAILED, SocketTimeout, INVALID_PAR, INVALID_REQ, CLIENT_EXCEPTION
+
+
 
 ## Expose local stuff
 # import sys as _sys, os as _os; _sys.path.append(_os.path.dirname(__file__))
@@ -10,4 +12,5 @@ from .server_client import get_client, Team_11_Client
 #
 # _ = _sys.path.pop()
 
-__all__ = ['NoMotorAck', 'SingleMotorAck', 'NoUltrasonics', 'Team_11_Robot', 'get_client', 'Team_11_Client']
+__all__ = ['NoMotorAck', 'SingleMotorAck', 'NoUltrasonics', 'Team_11_Robot', 'get_client', 'Team_11_Client',
+           'NO_CONNECTION', 'NEED_OWN', 'FAILED', 'SocketTimeout', 'INVALID_PAR', 'INVALID_REQ', 'CLIENT_EXCEPTION']
