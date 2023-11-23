@@ -28,7 +28,8 @@ def _encode_float(float_val: float) -> bytes:
 
 
 def _encode_char(char_val: int) -> bytes:
-    return chr(char_val).encode('utf-8')
+    return (char_val).to_bytes(1, byteorder='little')
+    # return chr(char_val).encode('utf-8')
 
 
 
@@ -66,7 +67,7 @@ def encode_forward(dist: float, speed: float = 60.0) -> bytes:
 
 
 
-def encode_rotate(angle: int, speed: float = 60.0) -> bytes:
+def encode_rotate(angle: int, speed: float = 30.0) -> bytes:
     """Encodes a ROTATE-CLOCKWISE message to robot.
 
     PARAMS:
@@ -129,9 +130,9 @@ def encode_ultrasonics() -> bytes:
 def encode_led(r: int, g: int, b: int) -> bytes:
     """Encode a message to set the LED color."""
     ## All values must be positive, and in [0, 255]
-    r = max(abs(r), 255)
-    g = max(abs(g), 255)
-    b = max(abs(b), 255)
+    r = min(abs(r), 255)
+    g = min(abs(g), 255)
+    b = min(abs(b), 255)
 
     ## One message to set each colour
     msg = b'L' + _encode_char(r) + _encode_char(g) + _encode_char(b)

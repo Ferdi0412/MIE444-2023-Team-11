@@ -11,8 +11,6 @@ import sys, os; sys.path.append(os.path.dirname(__file__))
 
 from robot import NoMotorAck, SingleMotorAck, NoUltrasonics, Team_11_Robot
 
-import numpy, pandas
-
 _ = sys.path.pop()
 
 
@@ -46,13 +44,15 @@ robot = Team_11_Robot("COM13")
 
 # print(robot.get_ultrasonics())
 
-print(robot.stop())
-print(robot.move_forward(10))
+print(robot.rotate(180))
 
-print(robot.get_ultrasonics_DataFrame(4))
+# print(robot.stop())
+# print(robot.move_forward(10))
 
-input("[ENTER] to stop...\n")
-print(robot.stop())
+# print(robot.get_ultrasonics_DataFrame(4))
+
+# input("[ENTER] to stop...\n")
+# print(robot.stop())
 # time.sleep(0.5)
 # print(robot.move_forward(10, 60))
 # time.sleep(0.5)

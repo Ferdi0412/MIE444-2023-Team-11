@@ -382,10 +382,10 @@ class Team_11_Robot:
 
     def set_led(self, red: int, green: int, blue: int) -> None:
         """Sets LED to a given colour, by RGB values."""
-        print(f"Setting LED state to R{red} G{green} B{blue}")
         ## Encode and send message, no response so nothing to check
         msg = _robot_encode.encode_led(red, green, blue)
         self._serial.write(msg)
+        print(f"Setting LED state to R{red} G{green} B{blue}\n{msg}")
         return
 
 

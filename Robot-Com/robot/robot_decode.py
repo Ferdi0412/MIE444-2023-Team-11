@@ -88,7 +88,8 @@ def decode_stop(msg: bytes) -> tuple[bytes, float]:
 def decode_active(msg: bytes) -> tuple[bytes, bool]:
     """Decode response to an ACTIVE request."""
     motor_id  = msg[ 1 : 2 ]
-    is_active = bool(msg[ 3 ])
+    ## not, as I accidentally put to return target_speed == 0 on arduinos...
+    is_active = not msg[ 2 ]
     return motor_id, is_active
 
 ############################
