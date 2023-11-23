@@ -125,7 +125,7 @@ def sensorSweep(numberSweeps):
         transmit('u0')
         #time.sleep(0.2)
         #print(f"Ultrasonic 0 reading: {round(responses[0], 3)}")
-        if responses[0] > 1 and responses[0] < 60:
+        if responses[0] > 1 and responses[0] < 72:
             flread = flread + responses[0]
             successfulSweeps[0] = successfulSweeps[0] + 1
     
@@ -173,17 +173,37 @@ def emergencyCheck(information):
             emergencyList[i] = True
             wallAlert = True
     return wallAlert,emergencyList
+
+def emergencyMoveSideways(right):
+    if right:
+        transmit('d0--1')
+    else:
+        transmit('d0-1')
+    currentlySideMoving = True
+    while currentlySideMoving:
+        transmit('d0-0')
+        if responses[0] == math.inf:
+            currentlySideMoving = False
+    return()
         
+
 def emergencyMove(emergencyList):
     if emergencyList[0] or emergencyList[1]:
         transmit('w0--1')
         print('Emergency Moving Back')
     elif emergencyList[2]:
-        transmit('d0--1')
-        print('Emergency Moving Right')
+        emergencyMoveSideways(True)
+        #print('Emergency Moving Right')
+        transmit('r0-10')
+        currentlySideMoving = True
+        while currentlySideMoving:
+            transmit('d0-0')
+            if responses[0] == math.inf:
+                currentlySideMoving = False
     elif emergencyList[3]:
-        transmit('d0-1')
-        print('Emergency Moving Left')
+        emergencyMoveSideways(False)
+        #print('Emergency Moving Left')
+        transmit('r0--10')
     else:
         transmit('w0-1')
         print('Emergency Moving Forward')
@@ -214,8 +234,7 @@ def moveForward(fDistance):
             emergencyMove(emergencyList)
             print('Moving '+str(distanceRemaining))
             moveForward(distanceRemaining)
-            currentlyTranslating = False
-            
+            currentlyTranslating = False   
     return()
 
 def moveRight(dDistance):
@@ -257,9 +276,10 @@ def rotateLeft(rDistance):
     return()
 
 def align(located):
-    degreesRotated = 0
+    degreesRotated = -45
     diagAlign = False
     wallAlign = False
+    rotateLeft(45)
     while not diagAlign and not wallAlign:
         readings = sensorSweep(3)
         #print(readings)
@@ -295,8 +315,8 @@ def align(located):
             lockList = [0-degreesRotated, 90-degreesRotated, 180-degreesRotated, 270-degreesRotated, 360-degreesRotated]
             turnList = [0,-90,-180,-270,0]
         else:
-            lockList = [45-degreesRotated, 135-degreesRotated, 225-degreesRotated, 315-degreesRotated, 405-degreesRotated]
-            turnList = [-45,-135,-225,-315,-45]
+            lockList = [-45-degreesRotated,45-degreesRotated, 135-degreesRotated, 225-degreesRotated, 315-degreesRotated, 405-degreesRotated]
+            turnList = [45,-45,-135,-225,-315,-45]
         for k in range(len(lockList)):
             if lockList[k] < 0:
                 lockList[k] = -lockList[k]
@@ -473,7 +493,7 @@ def localizer():
     locationList = findNewLocations(locationList,maze,roomType,True)
     
     while not localized:
-        input('Next Step: ')
+        #input('Next Step: ')
         information = sensorSweep(10)
         if information[0] < 12 or information[1] < 12:
             align(True)
@@ -605,7 +625,7 @@ def travelToLoadingZone(robotLocation):
     while travelling:
         #print(robotLocation)
         locationData = [*robotLocation]
-        print(locationData)
+        #print(locationData)
         if int(locationData[0]) == 0 or int(locationData[0]) == 1:
             rowCheck = True
         if int(locationData[1]) == 0 or int(locationData[1]) == 1:
@@ -622,6 +642,6 @@ def travelToLoadingZone(robotLocation):
                 robotLocation = moveWest(robotLocation)
     return(robotLocation)
     
-input('Begin Sequence: ')
+#input('Begin Sequence: ')
 robotLocation = localizer()
 robotLocation = travelToLoadingZone(robotLocation)
