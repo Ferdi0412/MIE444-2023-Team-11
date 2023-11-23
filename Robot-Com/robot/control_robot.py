@@ -78,6 +78,7 @@ class Team_11_Robot:
 
             ## If no message, or invalid message, sleep and then continue
             if not (msg and msg[0] == message_type):
+                print(f"[_await_robot_active] Received invalid value...: {msg}")
                 _time.sleep(self._retry_sleep)
                 continue
 
@@ -121,8 +122,8 @@ class Team_11_Robot:
 
             ## If no message, or invalid message, sleep and then continue
             if not (msg and msg[0] == message_type):
-                _time.sleep(self._retry_sleep)
                 print(f"[_await_robot_progress] Received invalid value...: {msg}")
+                _time.sleep(self._retry_sleep)
                 continue
 
             ## Sometimes a char in the middle is '\n', account for this
@@ -279,7 +280,7 @@ class Team_11_Robot:
 
 
 
-    def move_forward(self, distance: float, speed: float = 60.0) -> float:
+    def move_forward(self, distance: float, speed: float = 40.0) -> float:
         """Send command to move robot forward by {distance} inches.
         Returns progress along previous move (in inches).
         Raises NoMotorAck, SingleMotorAck.

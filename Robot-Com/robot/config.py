@@ -2,12 +2,13 @@
 MOTOR_LEFT  = b'\x02'
 MOTOR_RIGHT = b'\x03'
 
-MOTOR_LEFT_FACTOR  = 0.96 ## To account for right-bias
+#MOTOR_LEFT_FACTOR  = 0.96 ## To account for right-bias
+MOTOR_LEFT_FACTOR  = 0.96
 MOTOR_RIGHT_FACTOR = 1.0
 MOTOR_SPEED_MAX    = 100
 
 ## Number of pulses per inch fwd
-PULSES_FWD = 100
+PULSES_FWD = 45.5
 
 ## Number of pulses per 90 degrees of rotation
 PULSES_ROT =  50

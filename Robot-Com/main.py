@@ -47,7 +47,7 @@ robot = Team_11_Robot("COM13")
 # print(robot.get_ultrasonics())
 
 print(robot.stop())
-print(robot.move_forward(-100, 100))
+print(robot.move_forward(10))
 
 print(robot.get_ultrasonics_DataFrame(4))
 
