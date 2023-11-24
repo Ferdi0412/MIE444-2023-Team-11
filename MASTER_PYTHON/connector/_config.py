@@ -16,7 +16,7 @@ DATA_PREFIX = b'~'
 
 TIME_OFFSET   = 80
 TIME_TO_DIST  = 10000 / 72.5 * 1.1
-TIME_TO_ANGLE = 1
+TIME_TO_ANGLE = 40 / 2.85
 
 ULTR_LOOKUP = {"0": "FL",
                "1": "FR",

@@ -18,7 +18,7 @@ _ = sys.path.pop() ## Cleanup local modules
 ### INTERNAL FUNCTIONS ###
 ##########################
 def _encode_int(int_val: int) -> bytes:
-    return _struct.pack('<h', int(int_val))
+    return _struct.pack('<H', int(int_val))
 
 
 

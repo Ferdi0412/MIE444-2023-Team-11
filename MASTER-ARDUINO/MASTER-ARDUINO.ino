@@ -48,7 +48,7 @@
 
 #define LIN_SPEED 160
 #define LIN_DURATION 600
-#define ROT_SPEED 85
+#define ROT_SPEED 120
 #define ROT_DURATION 300
 
 #define DATA_BYTE '~'

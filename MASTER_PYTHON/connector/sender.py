@@ -27,21 +27,23 @@ def _ultrasonic_lookup(readings: dict) -> dict:
     """Translate "Arduino" names to colloquial names."""
     return dict([_config.ULTR_LOOKUP.get(sensor_id, sensor_id), val] for sensor_id, val in readings.items())
 
-
+def _cm_to_inch(val: float) -> float:
+    return 0.393701 * val
 
 ############
 ### MAIN ###
 ############
 class Team_11_Robot:
     def __init__(self, com_port: str, serial_timeout: float):
-        self._com = _serial.Serial(com_port, timeout=serial_timeout)
+        self._com = _serial.Serial(com_port, timeout=serial_timeout, write_timeout=1000)
         print(f"Connected on {com_port}!")
 
 
 
-    def write(self, msg) -> None:
+    def write(self, msg: bytes) -> None:
         # print(f"[Sender] -> {msg}")
         self._com.write(msg)
+        print(msg)
 
 
     def readline(self) -> bytes:
@@ -113,7 +115,7 @@ class Team_11_Robot:
 
     def ultrasonics(self) -> dict[str, float]:
         self.write(_encode.encode_ultrasonic())
-        return _ultrasonic_lookup(decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX)))
+        return {key: _cm_to_inch(val) for key, val in _ultrasonic_lookup(decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX))).items()}
 
 
 
@@ -121,7 +123,7 @@ class Team_11_Robot:
         readings = {}
         for _ in range(number_of_attempts):
             self.write(_encode.encode_ultrasonic())
-            new_vals: dict = decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX))
+            new_vals: dict = {key: _cm_to_inch(val) for key, val in decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX)).items()}
             for sensor_id, sensor_val in new_vals.items():
                 if sensor_id not in readings:
                     readings[sensor_id] = []

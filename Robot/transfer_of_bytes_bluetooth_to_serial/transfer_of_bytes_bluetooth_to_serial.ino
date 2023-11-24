@@ -1,4 +1,4 @@
-1#include "BluetoothSerial.h"
+#include "BluetoothSerial.h"
 
 // LED to blink to indicate communication
 #define LED_ON_MSG
