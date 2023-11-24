@@ -1,4 +1,4 @@
-#define ComputerSerial Serial3  // Change to Serial for computer control; Serial3 for bluetooth control;
+#define ComputerSerial Serial  // Change to Serial for computer control; Serial3 for bluetooth control;
 
 
 
@@ -40,6 +40,9 @@
 #define TIME_TO_DIST (0.034 * 0.5)
 
 // MOTION CONFIG...
+#define RAMP_STEPS 3
+#define RAMP_DELAY 50
+
 #define SPEED_L 0.905
 #define SPEED_R 1.0
 
@@ -179,26 +182,56 @@ void set_led(int r, int g, int b) {
    MOTOR FUNCTIONS 
    ================= */
 void go_forward(unsigned int duration) {
-  start_motor_R(1, (long)duration, 1);
-  start_motor_L(1, (long)duration, 1);
+  // Start both motors...
+  start_motor_R( 1, (long) duration, 0); start_motor_L( 1, (long) duration, 0);
+
+  // Ramp up the speeds...
+  ramp_speeds(LIN_SPEED);
 }
 
 void go_backward(unsigned int duration) {
-  start_motor_R(-1, (long)duration, 1);
-  start_motor_L(-1, (long)duration, 1);
+  // Start both motors...
+  start_motor_R(-1, (long)duration, 0); start_motor_L(-1, (long)duration, 0);
+
+  // Ramp up the speeds...
+  ramp_speeds(LIN_SPEED);
 }
 
 void go_clock(unsigned int duration) {
-  start_motor_R(-1, (long)duration, 0);
-  start_motor_L(1, (long)duration, 0);
+  // Start both motors...
+  start_motor_R(-1, (long)duration, 0); start_motor_L(1, (long)duration, 0);
+
+  // Ramp up the speeds...
+  ramp_speeds(ROT_SPEED);
 }
 
 void go_cclock(unsigned int duration) {
-  start_motor_R(1, (long)duration, 0);
-  start_motor_L(-1, (long)duration, 0);
+  // Start both motors...
+  start_motor_R(1, (long)duration, 0); start_motor_L(-1, (long)duration, 0);
+
+  // Ramp up the speeds...
+  ramp_speeds(ROT_SPEED);
 }
 
-void start_motor_R(int direction, long duration, int is_lin) {
+void ramp_speeds( int final_speed ) {
+  for ( int i = 1; i < RAMP_STEPS+1; i++ ) {
+    int speed = (int) (((float) final_speed) * (((float) i) / RAMP_STEPS));
+    set_motor_R_speed(speed);
+    set_motor_L_speed(speed);
+    Serial.println(speed);
+    delay(RAMP_DELAY);
+  }
+}
+
+void set_motor_R_speed( int speed ) {
+  analogWrite(EN_R, apply_factor(speed, SPEED_R));
+}
+
+void set_motor_L_speed( int speed ) {
+  analogWrite(EN_L, apply_factor(speed, SPEED_L));
+} 
+
+void start_motor_R(int direction, long duration, int speed) {
   unsigned long now = millis();
 
   if (direction < 0) {
@@ -209,14 +242,15 @@ void start_motor_R(int direction, long duration, int is_lin) {
     digitalWrite(IN_R_2, LOW);
   }
 
-  analogWrite(EN_R, apply_factor(is_lin ? LIN_SPEED : ROT_SPEED, SPEED_R));
+  analogWrite(EN_R, apply_factor(speed, SPEED_R));
 
   motor_R_end = now + duration;
   motor_R_start = now;
   motor_R_stopped = 0;
+  
 }
 
-void start_motor_L(int direction, long duration, int is_lin) {
+void start_motor_L(int direction, long duration, int speed) {
   unsigned long now = millis();
 
   if (direction < 0) {
@@ -227,11 +261,11 @@ void start_motor_L(int direction, long duration, int is_lin) {
     digitalWrite(IN_L_2, LOW);
   }
 
-  analogWrite(EN_L, apply_factor(is_lin ? LIN_SPEED : ROT_SPEED, SPEED_L));
+  analogWrite(EN_L, apply_factor(speed, SPEED_L));
 
   motor_L_end = now + duration;
   motor_L_start = now;
-  motor_L_stopped = 0;
+  motor_L_stopped = 0; 
 }
 
 void stop_motor_R() {
