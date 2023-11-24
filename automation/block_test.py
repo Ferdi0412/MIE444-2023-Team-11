@@ -151,18 +151,23 @@ def comSensorSweep(numberSweeps):
         if sensorData['G'][i] > 1 and sensorData['G'][i] < 72:
             gread = gread + sensorData['G'][i]
             successfulSweeps[5] = successfulSweeps[5] + 1
-
-    ## TODO: Fix this divide by ZERO
-    flread = (flread / successfulSweeps[0]) if successfulSweeps[0] else 0
-    frread = (frread / successfulSweeps[1]) if successfulSweeps[1] else 0
-    lread = (lread / successfulSweeps[2]) if successfulSweeps[2] else 0
-    rread = (rread / successfulSweeps[3]) if successfulSweeps[3] else 0
-    bread = (bread / successfulSweeps[4]) if successfulSweeps[4] else 0
-    ## TODO: Re-implement actual gread...
-    # gread = gread / successfulSweeps[5]
-    gread = 0
-
-    return([frread,flread,rread,lread,bread,gread])
+            
+    sensorSuccessful = True
+    sensorSuccessful = all(successfulSweeps)
+    # for i in range(6):
+    #     if successfulSweeps[i] == 0:
+    #         sensorSuccessful = False
+    if sensorSuccessful:
+        flread = flread / successfulSweeps[0]
+        frread = frread / successfulSweeps[1]
+        lread = lread / successfulSweeps[2]
+        rread = rread / successfulSweeps[3]
+        bread = bread / successfulSweeps[4]
+        gread = gread / successfulSweeps[5]
+        outputData = [frread,flread,rread,lread,bread,gread]
+    else:
+        outputData = comSensorSweep(numberSweeps)
+    return(outputData)
 
 def simSensorSweep(numberSweeps):
 
@@ -806,18 +811,51 @@ def moveWest(robotLocation, selectSimmer):
     newLocation = str(locationData[0])+str(locationData[1])+'W'
     return(newLocation)
 
+def blockSweep(selectSimmer):
+    angles=[]
+    center(selectSimmer)
+    rotateLeft(45, selectSimmer)
+    for i in 31:
+        sensorData = sensorSweep(3, selectSimmer)
+        highFrontAverage = (sensorData[0] + sensorData[1])/2
+        blockSensor = sensorData[5]
+        angles.append(highFrontAverage-blockSensor)
+        if i < 30:
+            rotateRight(3, selectSimmer)
+    rotateRight(45, selectSimmer)
+    maxVal = max(angles)
+    if maxVal > 3:
+        blockDetected = True
+    angleFromLeft = (angles.index(maxVal))*3
+    angleFromCenter = angleFromLeft - 45
+    return (angleFromCenter, blockDetected)
+
 def travelToLoadingZone(robotLocation, selectSimmer):
     travelling = True
     rowCheck = False
     columnCheck = False
+    blockAlert = False
+    blockFound = False
     while travelling:
         #print(robotLocation)
         locationData = [*robotLocation]
         #print(locationData)
-        if int(locationData[0]) == 0 or int(locationData[0]) == 1:
+        if int(locationData[0]) == 0:
             rowCheck = True
-        if int(locationData[1]) == 0 or int(locationData[1]) == 1:
+        if int(locationData[1]) == 0:
             columnCheck = True
+        if int(locationData[0]) < 2 and columnCheck:
+            blockAlert = True
+        if int(locationData[1]) < 2 and rowCheck:
+            blockAlert = True
+        if rowCheck and columnCheck:
+            travelling = False
+        if blockAlert:
+            angleFromCenter, blockDetected = blockSweep(selectSimmer)
+            if blockDetected:
+                blockFound = True
+                rowCheck = True
+                columnCheck = True
         if rowCheck and columnCheck:
             travelling = False
         else:
@@ -828,10 +866,10 @@ def travelToLoadingZone(robotLocation, selectSimmer):
                 robotLocation = moveNorth(robotLocation, selectSimmer)
             else:
                 robotLocation = moveWest(robotLocation, selectSimmer)
-    return(robotLocation)
+    return(robotLocation, blockFound, angleFromCenter)
 
-
-
+def blockFinder(robotLocation, selectSimmer):
+    return()
 
 ############
 ### MAIN ###
