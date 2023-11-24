@@ -153,9 +153,10 @@ def comSensorSweep(numberSweeps):
             successfulSweeps[5] = successfulSweeps[5] + 1
             
     sensorSuccessful = True
-    for i in range(6):
-        if successfulSweeps[i] == 0:
-            sensorSuccessful = False
+    sensorSuccessful = all(successfulSweeps)
+    # for i in range(6):
+    #     if successfulSweeps[i] == 0:
+    #         sensorSuccessful = False
     if sensorSuccessful:
         flread = flread / successfulSweeps[0]
         frread = frread / successfulSweeps[1]
