@@ -82,7 +82,8 @@ int llsensorEcho = A0;
 unsigned int time[7];
 int distance[7];
 
-SoftwareSerial espSerial (A8/*rx*/, A9/*tx*/);
+// SoftwareSerial espSerial (A8/*rx*/, A9/*tx*/);
+#define espSerial Serial
 
 // To allow for string-type handling...
 

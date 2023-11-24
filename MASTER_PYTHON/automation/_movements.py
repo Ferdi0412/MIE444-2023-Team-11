@@ -158,5 +158,17 @@ def room_detector(robot):
 
     if number_of_walls == 3:
         room_type = 'D'
+    elif number_of_walls == 2 and room_sequence[0] == True:
+        room_type = 'H'
     elif number_of_walls == 2:
+        room_type = 'C'
+    elif number_of_walls == 1:
+        room_type = 'T'
+    else:
+        room_type = 'F'
+    print(f"[room_detector] -> Room type: {room_type}")
+    return sensor_readings, room_type
 
+def find_new_locations_first(robot, location_list)
+
+def find_new_locations(robot, location_list, maze, room_type, step_one):

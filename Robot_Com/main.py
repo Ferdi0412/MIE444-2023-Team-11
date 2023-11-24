@@ -36,7 +36,8 @@ if __name__ != '__main__':
     #df.append(robot.get_ultrasonics())
 
 
-robot = Team_11_Robot("COM13")
+robot = Team_11_Robot("COM10")
+time.sleep(2)
 
 # print("Getting ultrasonics 5 times!")
 

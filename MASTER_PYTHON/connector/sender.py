@@ -40,7 +40,14 @@ class Team_11_Robot:
 
 
     def write(self, msg) -> None:
+        # print(f"[Sender] -> {msg}")
         self._com.write(msg)
+
+
+    def readline(self) -> bytes:
+        msg = self._com.readline()
+        # print(f"[Sender] -> {msg}")
+        return msg
 
 
 
@@ -48,10 +55,10 @@ class Team_11_Robot:
         """Move forward by {distance} inches."""
         if distance > 0:
             self.write(_encode.encode_forward(distance))
-            wait_for_acknowledge(self._com, _config.Acknowledges.W_ACK)
+            wait_for_acknowledge(self, _config.Acknowledges.W_ACK)
         else:
-            self.write(_encode.encode_backwards(distance))
-            wait_for_acknowledge(self._com, _config.Acknowledges.S_ACK)
+            self.write(_encode.encode_backwards(abs(distance)))
+            wait_for_acknowledge(self, _config.Acknowledges.S_ACK)
 
 
 
@@ -59,24 +66,24 @@ class Team_11_Robot:
         """Rotate clockwise by {angle} degrees."""
         if angle > 0:
             self.write(_encode.encode_clockwise(angle))
-            wait_for_acknowledge(self._com, _config.Acknowledges.E_ACK)
+            wait_for_acknowledge(self, _config.Acknowledges.E_ACK)
         else:
-            self.write(_encode.encode_counter_clockwise(angle))
-            wait_for_acknowledge(self._com, _config.Acknowledges.Q_ACK)
+            self.write(_encode.encode_counter_clockwise(abs(angle)))
+            wait_for_acknowledge(self, _config.Acknowledges.Q_ACK)
 
 
 
     def stop(self) -> None:
         """Stop motors."""
         self.write(_encode.encode_stop())
-        wait_for_acknowledge(self._com, _config.Acknowledges.STOP_ACK)
+        wait_for_acknowledge(self, _config.Acknowledges.STOP_ACK)
 
 
 
     def is_active(self) -> bool:
         """Check if motor is in active motion."""
         self.write(_encode.encode_active())
-        reply = wait_for_replies(self._com, [_config.Acknowledges.ACTIVE, _config.Acknowledges.NACTIVE])
+        reply = wait_for_replies(self, [_config.Acknowledges.ACTIVE, _config.Acknowledges.NACTIVE]).replace(b'\n', b'').replace(b'\r', b'')
         if reply == _config.Acknowledges.ACTIVE:
             return True
         else:
@@ -87,26 +94,26 @@ class Team_11_Robot:
     def progress(self) -> float:
         """Return percentage progress along last move."""
         self.write(_encode.encode_progress())
-        reply = wait_for_reply(self._com, _config.PROG_PREFIX)
+        reply = wait_for_reply(self, _config.PROG_PREFIX)
         return decode_progress(reply)
 
 
 
     def led(self, r: int, g: int, b: int) -> None:
         self.write(_encode.encode_led(r, g, b))
-        wait_for_acknowledge(self._com, _config.Acknowledges.LED_ACK)
+        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK)
 
 
 
     def led_off(self) -> None:
         self.write(_encode.encode_led(0, 0, 0))
-        wait_for_acknowledge(self._com, _config.Acknowledges.LED_ACK)
+        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK)
 
 
 
     def ultrasonics(self) -> dict[str, float]:
         self.write(_encode.encode_ultrasonic())
-        return _ultrasonic_lookup(decode_ultrasonics(wait_for_reply(self._com, _config.ULTR_PREFIX)))
+        return _ultrasonic_lookup(decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX)))
 
 
 
@@ -114,7 +121,7 @@ class Team_11_Robot:
         readings = {}
         for _ in range(number_of_attempts):
             self.write(_encode.encode_ultrasonic())
-            new_vals: dict = decode_ultrasonics(wait_for_reply(self._com, _config.ULTR_PREFIX))
+            new_vals: dict = decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX))
             for sensor_id, sensor_val in new_vals.items():
                 if sensor_id not in readings:
                     readings[sensor_id] = []
