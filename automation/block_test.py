@@ -21,6 +21,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # Code modified from examples on https://realpython.com/python-sockets/
 # and https://www.geeksforgeeks.org/python-display-text-to-pygame-window/
 
+## Ferdi magic line ----
+import sys, os; print(os.path.dirname(os.path.dirname(__file__))); sys.path.append(os.path.dirname(os.path.dirname(__file__))); from MASTER_PYTHON.connector.sender import Team_11_Robot as Team_11_Client; _=sys.path.pop()
+##                  ----
+
 import socket
 import struct
 import time
@@ -113,60 +117,63 @@ time_rx = 'Never'
 #cmd_sequence = ['w0-36', 'r0-90', 'w0-36', 'r0-90', 'w0-12', 'r0--90', 'w0-24', 'r0--90', 'w0-6', 'r0-720']
 def comSensorSweep(numberSweeps):
     sensorData = robot.ultrasonic_json(numberSweeps)
-    
+
     flread = 0
     frread = 0
     lread = 0
     rread = 0
     bread = 0
     gread = 0
-    
+
     successfulSweeps = [0,0,0,0,0,0]
-    
+
     for i in range(0,numberSweeps):
-        if sensorData['fl'][i] > 1 and sensorData['fl'][i] < 72:
-            flread = flread + sensorData['fl'][i]
+        if sensorData['FL'][i] > 1 and sensorData['FL'][i] < 72:
+            flread = flread + sensorData['FL'][i]
             successfulSweeps[0] = successfulSweeps[0] + 1
-            
-        if sensorData['fr'][i] > 1 and sensorData['fr'][i] < 72:
-            frread = frread + sensorData['fr'][i]
+
+        if sensorData['FR'][i] > 1 and sensorData['FR'][i] < 72:
+            frread = frread + sensorData['FR'][i]
             successfulSweeps[1] = successfulSweeps[1] + 1
-            
-        if sensorData['r'][i] > 1 and sensorData['r'][i] < 72:
-            rread = rread + sensorData['r'][i]
+
+        if sensorData['R'][i] > 1 and sensorData['R'][i] < 72:
+            rread = rread + sensorData['R'][i]
             successfulSweeps[2] = successfulSweeps[2] + 1
-            
-        if sensorData['b'][i] > 1 and sensorData['b'][i] < 72:
-            bread = bread + sensorData['b'][i]
+
+        if sensorData['B'][i] > 1 and sensorData['B'][i] < 72:
+            bread = bread + sensorData['B'][i]
             successfulSweeps[3] = successfulSweeps[3] + 1
-            
-        if sensorData['l'][i] > 1 and sensorData['l'][i] < 72:
-            lread = lread + sensorData['l'][i]
+
+        if sensorData['L'][i] > 1 and sensorData['L'][i] < 72:
+            lread = lread + sensorData['L'][i]
             successfulSweeps[4] = successfulSweeps[4] + 1
-            
-        if sensorData['g'][i] > 1 and sensorData['g'][i] < 72:
-            gread = gread + sensorData['g'][i]
+
+        if sensorData['G'][i] > 1 and sensorData['G'][i] < 72:
+            gread = gread + sensorData['G'][i]
             successfulSweeps[5] = successfulSweeps[5] + 1
-        
-    flread = flread / successfulSweeps[0]
-    frread = frread / successfulSweeps[1]
-    lread = lread / successfulSweeps[2]
-    rread = rread / successfulSweeps[3]
-    bread = bread / successfulSweeps[4]
-    gread = gread / successfulSweeps[5]
-    
+
+    ## TODO: Fix this divide by ZERO
+    flread = (flread / successfulSweeps[0]) if successfulSweeps[0] else 0
+    frread = (frread / successfulSweeps[1]) if successfulSweeps[1] else 0
+    lread = (lread / successfulSweeps[2]) if successfulSweeps[2] else 0
+    rread = (rread / successfulSweeps[3]) if successfulSweeps[3] else 0
+    bread = (bread / successfulSweeps[4]) if successfulSweeps[4] else 0
+    ## TODO: Re-implement actual gread...
+    # gread = gread / successfulSweeps[5]
+    gread = 0
+
     return([frread,flread,rread,lread,bread,gread])
 
 def simSensorSweep(numberSweeps):
-    
+
     flread = 0
     frread = 0
     lread = 0
     rread = 0
     bread = 0
-    
+
     successfulSweeps = [0,0,0,0,0]
-    
+
     for i in range(0,numberSweeps):
         transmit('u0')
         #time.sleep(0.2)
@@ -174,41 +181,41 @@ def simSensorSweep(numberSweeps):
         if responses[0] > 1 and responses[0] < 72:
             flread = flread + responses[0]
             successfulSweeps[0] = successfulSweeps[0] + 1
-    
+
         transmit('u1')
         #time.sleep(0.2)
         #print(f"Ultrasonic 1 reading: {round(responses[0], 3)}")
         if responses[0] > 1 and responses[0] < 60:
             rread = rread + responses[0]
             successfulSweeps[1] = successfulSweeps[1] + 1
-    
+
         transmit('u2')
         #time.sleep(0.2)
         #print(f"Ultrasonic 2 reading: {round(responses[0], 3)}")
         if responses[0] > 1 and responses[0] < 60:
             lread = lread + responses[0]
             successfulSweeps[2] = successfulSweeps[2] + 1
-    
+
         transmit('u3')
         #time.sleep(0.2)
         #print(f"Ultrasonic 3 reading: {round(responses[0], 3)}")
         if responses[0] > 1 and responses[0] < 60:
             bread = bread + responses[0]
             successfulSweeps[3] = successfulSweeps[3] + 1
-            
+
         transmit('u4')
         #wtime.sleep(0.2)
         #print(f"Ultrasonic 3 reading: {round(responses[0], 3)}")
         if responses[0] > 1 and responses[0] < 60:
             frread = frread + responses[0]
             successfulSweeps[4] = successfulSweeps[4] + 1
-            
+
     flread = flread / successfulSweeps[0]
     frread = frread / successfulSweeps[1]
     lread = lread / successfulSweeps[2]
     rread = rread / successfulSweeps[3]
     bread = bread / successfulSweeps[4]
-    
+
     return([frread,flread,rread,lread,bread])
 
 def emergencyCheck(information):
@@ -225,7 +232,7 @@ def comEmergencyMoveSideways(right):
         angle = 90
     else:
         angle = -90
-    
+
     robot.rotate(angle)
     rotating = True
     while rotating:
@@ -257,7 +264,7 @@ def simEmergencyMoveSideways(right):
         if responses[0] == math.inf:
             currentlySideMoving = False
     return()
-        
+
 def comEmergencyMove(emergencyList):
     if emergencyList[0] or emergencyList[1]:
         robot.move_forward(-1)
@@ -272,11 +279,11 @@ def comEmergencyMove(emergencyList):
         robot.move_forward(1)
     emergencyMoving = True
     while emergencyMoving:
-        switch = robot.isactive()
+        switch = robot.is_active()
         if switch == False:
             emergencyMoving = False
     return()
-        
+
 def simEmergencyMove(emergencyList):
     if emergencyList[0] or emergencyList[1]:
         transmit('w0--1')
@@ -308,14 +315,16 @@ def simEmergencyMove(emergencyList):
         if responses[0] == math.inf:
             currentlyMoving = False
     return()
-    
+
 def comMoveForward(fDistance):
-    robot.moveForward(fDistance)
+    robot.move_forward(fDistance)
     currentlyTranslating = True
     while currentlyTranslating:
         switch = robot.is_active()
         if switch == False:
             currentlyTranslating = False
+        ## Retry ONCE if invalid readdings
+        ## TODO: Handle this better
         currentDistance = comSensorSweep(1)
         wallAlert, emergencyList = emergencyCheck(currentDistance)
         if wallAlert:
@@ -326,7 +335,7 @@ def comMoveForward(fDistance):
             comMoveForward(distanceRemaining)
             currentlyTranslating = False
     return()
-    
+
 def simMoveForward(fDistance):
     initialDistance = simSensorSweep(5)
     initialDistanceFront = (initialDistance[0]+initialDistance[1])/2
@@ -346,7 +355,7 @@ def simMoveForward(fDistance):
             simEmergencyMove(emergencyList)
             print('Moving '+str(distanceRemaining))
             simMoveForward(distanceRemaining)
-            currentlyTranslating = False   
+            currentlyTranslating = False
     return()
 
 def simMoveRight(dDistance):
@@ -373,7 +382,7 @@ def comRotateRight(rDistance):
     robot.rotate(rDistance)
     currentlyRotating = True
     while currentlyRotating:
-        switch = robot.isactive()
+        switch = robot.is_active()
         if switch == False:
             currentlyRotating = False
     return()
@@ -391,7 +400,7 @@ def comRotateLeft(rDistance):
     robot.rotate(-rDistance)
     currentlyRotating = True
     while currentlyRotating:
-        switch = robot.isactive()
+        switch = robot.is_active()
         if switch == False:
             currentlyRotating = False
     return()
@@ -421,6 +430,8 @@ def sensorSweep(numberSweeps,selectSimmer):
     if selectSimmer:
         information = simSensorSweep(numberSweeps)
     else:
+        ## TODO: Handle this better.
+        ## Retry ONCE incase of ZERO division
         information = comSensorSweep(numberSweeps)
     return information
 
@@ -430,7 +441,7 @@ def moveForward(fDistance,selectSimmer):
     else:
         comMoveForward(fDistance)
     return()
-        
+
 def moveRight(dDistance, selectSimmer):
     if selectSimmer:
         simMoveRight(dDistance)
@@ -460,17 +471,17 @@ def align(located,selectSimmer):
     while not diagAlign and not wallAlign:
         readings = sensorSweep(3,selectSimmer)
         #print(readings)
-        
+
         diagCheck = True
         for i in readings:
-            if i > 8:
+            if i > 10:
                 diagCheck = False
         closeCheck = readings[0] - readings[1]
         #print(closeCheck)
         if closeCheck < 0:
                 closeCheck = -closeCheck
         #print(str(closeCheck))
-        if closeCheck < 0.1 and readings[0] < 9.6 and (readings[2] > 12 or readings[3] > 12 or readings[4] > 12):
+        if closeCheck < 1 and readings[0] < 9.6 and (readings[2] > 12 or readings[3] > 12 or readings[4] > 12):
             wallAlign = True
         elif diagCheck:
             diagAlign = True
@@ -479,14 +490,14 @@ def align(located,selectSimmer):
                     #print('Rotation Complete')
                 #else:
                     #print('Still Rotating')
-                    
+
     #if diagAlign:
         #print('Diagonally Aligned')
     #else:
         #print('Wall Aligned')
-    
+
     #print('Degrees Rotated: '+str(degreesRotated))
-        
+
     if located:
         if wallAlign:
             lockList = [0-degreesRotated, 90-degreesRotated, 180-degreesRotated, 270-degreesRotated, 360-degreesRotated]
@@ -505,21 +516,21 @@ def align(located,selectSimmer):
                 #print('Rotation Complete')
             #else:
                 #print('Still Rotating')
-                
+
     else:
         if diagAlign:
             rotateLeft(45, selectSimmer)
                     #print('Rotation Complete')
                 #else:
                     #print('Still Rotating')
-                    
+
         readings = sensorSweep(1, selectSimmer)
         if readings[0] < 12:
             rotateRight(90, selectSimmer)
                     #print('Rotation Complete')
                 #else:
                     #print('Still Rotating')
-                    
+
     return()
 
 def center(selectSimmer):
@@ -527,30 +538,30 @@ def center(selectSimmer):
     for i in range(len(readings)):
         while readings[i] > 12:
             readings[i] = readings[i] - 12
-    
+
     for j in range(len(readings)):
         if readings[j] > 9.6:
             readings[j] = readings[j] - 12
-            
+
     fbDifference = ((readings[0]+readings[1])/2) - readings[4]
     lrDifference = readings[2] - readings[3]
-    
+
     #print(str(fbDifference) + ',' + str(lrDifference))
     if fbDifference > 0 and (readings[0] < 3.5 or readings[1] < 3.5):
         fbDifference = 0
-    
+
     if fbDifference < 0 and readings[4] < 3.5:
         fbDifference = 0
-    
+
     if lrDifference > 0 and readings[2] < 3.5:
         lrDifference = 0
-        
+
     if lrDifference < 0 and readings[3] < 3.5:
         lrDifference = 0
-    
+
     moveForward(fbDifference/2, selectSimmer)
     moveRight(lrDifference/2, selectSimmer)
-    
+
     return()
 #ct = 0
 #while RUNNING:
@@ -595,7 +606,7 @@ def roomDetector(selectSimmer):
             numberOfWalls = numberOfWalls + 1
         else:
             roomSequence[i] = False
-    
+
     if numberOfWalls == 3:
         roomType = 'D'
     elif numberOfWalls == 2:
@@ -621,18 +632,18 @@ def findNewLocations(locationList,maze,roomType,stepOne):
     else:
         mazeBoundY = len(maze)
         mazeBoundX = len(maze[0])
-        
+
         for i in range(len(locationList)):
             infoCheck = [*locationList[i]]
             #print(str(infoCheck))
             if int(infoCheck[0]) != 0:
                 if maze[int(infoCheck[0])-1][int(infoCheck[1])] == roomType:
                     newList.append((str(int(infoCheck[0])-1))+infoCheck[1]+'N')
-                    
+
             if int(infoCheck[0]) != (mazeBoundY - 1):
                 if maze[int(infoCheck[0])+1][int(infoCheck[1])] == roomType:
                     newList.append((str(int(infoCheck[0])+1))+infoCheck[1]+'S')
-            
+
             if int(infoCheck[1]) != 0:
                 if maze[int(infoCheck[0])][int(infoCheck[1])-1] == roomType:
                     newList.append(infoCheck[0]+(str(int(infoCheck[1])-1))+'W')
@@ -640,35 +651,35 @@ def findNewLocations(locationList,maze,roomType,stepOne):
             if int(infoCheck[1]) != (mazeBoundX - 1):
                 if maze[int(infoCheck[0])][int(infoCheck[1])+1] == roomType:
                     newList.append(infoCheck[0]+(str(int(infoCheck[1])+1))+'E')
-    
+
     #print('Unmodified New List: ' + str(newList))
-    
+
     counter = 0
-    
+
     while counter < len(newList):
         if newList.count(newList[counter]) > 1:
             newList.remove(newList[counter])
         counter = counter + 1
-    
+
     print('New List:' + str(newList))
     return(newList)
 
 def localizer(selectSimmer):
     locationList = []
     localized = False
-    
+
     firstRow = ['C','T','H','C','E','D','E','D']
     secondRow = ['T','C','E','C','H','F','H','T']
     thirdRow = ['H','E','D','E','E','H','E','H']
     fourthRow = ['C','H','T','H','H','C','E','D']
-    
+
     maze = [firstRow, secondRow, thirdRow, fourthRow]
-    
+
     align(False, selectSimmer)
     center(selectSimmer)
     information, roomType = roomDetector(selectSimmer)
     locationList = findNewLocations(locationList,maze,roomType,True)
-    
+
     while not localized:
         #input('Next Step: ')
         information = sensorSweep(10, selectSimmer)
@@ -686,7 +697,7 @@ def localizer(selectSimmer):
             locationList = findNewLocations(locationList,maze,roomType,False)
         if len(locationList) == 1:
             localized = True
-            
+
     print('Localization Complete')
     return(locationList[0])
 
@@ -714,7 +725,7 @@ def directionalSensorSweep(robotLocation,numberSweeps,selectSimmer):
         sRead = information[2]
         wRead = (information[0]+information[1])/2
     return([nRead,eRead,sRead,wRead])
-    
+
 def moveNorth(robotLocation, selectSimmer):
     locationData = [*robotLocation]
     if locationData[2] == 'S':
@@ -818,12 +829,23 @@ def travelToLoadingZone(robotLocation, selectSimmer):
             else:
                 robotLocation = moveWest(robotLocation, selectSimmer)
     return(robotLocation)
-    
+
+
+
+
+############
+### MAIN ###
+############
+
 #input('Begin Sequence: ')
 identifier = input('R for robot, S for simmer: ')
 if identifier == 'R':
-    robot = Team_11_Client('Master')
-    robot.claim_ownership()
+    robot = Team_11_Client('COM13', 2000)
+
+    time.sleep(2)
+
+    robot.led(255, 0, 255)
+    # robot.claim_ownership()
     selectSimmer = False
 else:
     selectSimmer = True
