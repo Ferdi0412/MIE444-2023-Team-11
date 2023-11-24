@@ -35,7 +35,7 @@ def _cm_to_inch(val: float) -> float:
 ############
 class Team_11_Robot:
     def __init__(self, com_port: str, serial_timeout: float):
-        self._com = _serial.Serial(com_port, timeout=serial_timeout, write_timeout=1000)
+        self._com = _serial.Serial(com_port, timeout=serial_timeout, write_timeout=2)
         # print(f"Connected on {com_port}!")
 
 
