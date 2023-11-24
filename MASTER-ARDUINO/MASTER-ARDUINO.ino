@@ -1,4 +1,4 @@
-#define ComputerSerial Serial  // Change to Serial for computer control; Serial3 for bluetooth control;
+#define ComputerSerial Serial3  // Change to Serial for computer control; Serial3 for bluetooth control;
 
 
 
@@ -218,7 +218,6 @@ void ramp_speeds( int final_speed ) {
     int speed = (int) (((float) final_speed) * (((float) i) / RAMP_STEPS));
     set_motor_R_speed(speed);
     set_motor_L_speed(speed);
-    Serial.println(speed);
     delay(RAMP_DELAY);
   }
 }
