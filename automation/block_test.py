@@ -116,8 +116,9 @@ time_rx = 'Never'
 #RUNNING = True
 #cmd_sequence = ['w0-36', 'r0-90', 'w0-36', 'r0-90', 'w0-12', 'r0--90', 'w0-24', 'r0--90', 'w0-6', 'r0-720']
 def comSensorSweep(numberSweeps):
+    print("[SENSOR-SWEEP]")
     sensorData = robot.ultrasonic_json(numberSweeps)
-
+    #print(sensorData)
     flread = 0
     frread = 0
     lread = 0
@@ -125,33 +126,33 @@ def comSensorSweep(numberSweeps):
     bread = 0
     gread = 0
 
-    successfulSweeps = [0,0,0,0,0,0]
+    successfulSweeps = [0,0,0,0,0]
 
     for i in range(0,numberSweeps):
-        if sensorData['FL'][i] > 1 and sensorData['FL'][i] < 72:
+        if sensorData['FL'][i] > 0.1 and sensorData['FL'][i] < 72:
             flread = flread + sensorData['FL'][i]
             successfulSweeps[0] = successfulSweeps[0] + 1
 
-        if sensorData['FR'][i] > 1 and sensorData['FR'][i] < 72:
+        if sensorData['FR'][i] > 0.1 and sensorData['FR'][i] < 72:
             frread = frread + sensorData['FR'][i]
             successfulSweeps[1] = successfulSweeps[1] + 1
 
-        if sensorData['R'][i] > 1 and sensorData['R'][i] < 72:
+        if sensorData['R'][i] > 0.1 and sensorData['R'][i] < 72:
             rread = rread + sensorData['R'][i]
             successfulSweeps[2] = successfulSweeps[2] + 1
 
-        if sensorData['B'][i] > 1 and sensorData['B'][i] < 72:
+        if sensorData['B'][i] > 0.1 and sensorData['B'][i] < 72:
             bread = bread + sensorData['B'][i]
             successfulSweeps[3] = successfulSweeps[3] + 1
 
-        if sensorData['L'][i] > 1 and sensorData['L'][i] < 72:
+        if sensorData['L'][i] > 0.1 and sensorData['L'][i] < 72:
             lread = lread + sensorData['L'][i]
             successfulSweeps[4] = successfulSweeps[4] + 1
 
-        if sensorData['G'][i] > 1 and sensorData['G'][i] < 72:
-            gread = gread + sensorData['G'][i]
-            successfulSweeps[5] = successfulSweeps[5] + 1
-            
+        #if sensorData['G'][i] > 1 and sensorData['G'][i] < 72:
+            #gread = gread + sensorData['G'][i]
+            #successfulSweeps[5] = successfulSweeps[5] + 1
+    #print(successfulSweeps)
     sensorSuccessful = True
     sensorSuccessful = all(successfulSweeps)
     # for i in range(6):
@@ -163,9 +164,10 @@ def comSensorSweep(numberSweeps):
         lread = lread / successfulSweeps[2]
         rread = rread / successfulSweeps[3]
         bread = bread / successfulSweeps[4]
-        gread = gread / successfulSweeps[5]
-        outputData = [frread,flread,rread,lread,bread,gread]
+        #gread = gread / successfulSweeps[5]
+        outputData = [frread,flread,rread,lread,bread]
     else:
+        print('Error detection')
         outputData = comSensorSweep(numberSweeps)
     return(outputData)
 
@@ -214,7 +216,7 @@ def simSensorSweep(numberSweeps):
         if responses[0] > 1 and responses[0] < 60:
             frread = frread + responses[0]
             successfulSweeps[4] = successfulSweeps[4] + 1
-
+    print(successfulSweeps)
     flread = flread / successfulSweeps[0]
     frread = frread / successfulSweeps[1]
     lread = lread / successfulSweeps[2]
@@ -227,16 +229,16 @@ def emergencyCheck(information):
     emergencyList = [False,False,False,False,False]
     wallAlert = False
     for i in range(5):
-        if information[i] < 2.5:
+        if information[i] < 2:
             emergencyList[i] = True
             wallAlert = True
     return wallAlert,emergencyList
 
 def comEmergencyMoveSideways(right):
     if right:
-        angle = 90
+        angle = 10
     else:
-        angle = -90
+        angle = -10
 
     robot.rotate(angle)
     rotating = True
@@ -270,16 +272,22 @@ def simEmergencyMoveSideways(right):
             currentlySideMoving = False
     return()
 
-def comEmergencyMove(emergencyList):
+def comEmergencyMove(emergencyList,direction):
     if emergencyList[0] or emergencyList[1]:
         robot.move_forward(-1)
         print('Emergency Moving Back')
     elif emergencyList[2]:
-        comEmergencyMoveSideways(True)
-        robot.rotate(10)
+        #comEmergencyMoveSideways(True)
+        if direction:
+            robot.rotate(-10)
+        else:
+            robot.rotate(10)
     elif emergencyList[3]:
-        comEmergencyMoveSideways(False)
-        robot.rotate(-10)
+        #comEmergencyMoveSideways(False)
+        if direction:
+            robot.rotate(10)
+        else:
+            robot.rotate(-10)
     else:
         robot.move_forward(1)
     emergencyMoving = True
@@ -322,6 +330,8 @@ def simEmergencyMove(emergencyList):
     return()
 
 def comMoveForward(fDistance):
+    print('Moving Forward')
+    print('Initial Distance: '+str(fDistance))
     robot.move_forward(fDistance)
     currentlyTranslating = True
     while currentlyTranslating:
@@ -333,9 +343,15 @@ def comMoveForward(fDistance):
         currentDistance = comSensorSweep(1)
         wallAlert, emergencyList = emergencyCheck(currentDistance)
         if wallAlert:
-            distanceMoved = robot.progress()
+            percentMoved = (robot.progress())/100
+            print('Percentage Moved: ')
+            distanceMoved = fDistance * percentMoved
             distanceRemaining = fDistance - distanceMoved
-            comEmergencyMove(emergencyList)
+            if distanceRemaining > 0:
+                direction = True
+            else:
+                direction = False
+            comEmergencyMove(emergencyList, direction)
             print('Moving '+str(distanceRemaining))
             comMoveForward(distanceRemaining)
             currentlyTranslating = False
@@ -455,6 +471,8 @@ def moveRight(dDistance, selectSimmer):
     return()
 
 def rotateLeft(rDistance, selectSimmer):
+    print('')
+    print('Rotate Left')
     if selectSimmer:
         simRotateLeft(rDistance)
     else:
@@ -462,6 +480,8 @@ def rotateLeft(rDistance, selectSimmer):
     return()
 
 def rotateRight(rDistance, selectSimmer):
+    print('')
+    print('Rotate Right')
     if selectSimmer:
         simRotateRight(rDistance)
     else:
@@ -469,6 +489,8 @@ def rotateRight(rDistance, selectSimmer):
     return()
 
 def align(located,selectSimmer):
+    print('')
+    print('Beginning Align')
     degreesRotated = -45
     diagAlign = False
     wallAlign = False
@@ -486,22 +508,23 @@ def align(located,selectSimmer):
         if closeCheck < 0:
                 closeCheck = -closeCheck
         #print(str(closeCheck))
-        if closeCheck < 1 and readings[0] < 9.6 and (readings[2] > 12 or readings[3] > 12 or readings[4] > 12):
+        if closeCheck < 0.5 and readings[0] < 9.6 and (readings[2] > 12 or readings[3] > 12 or readings[4] > 12):
             wallAlign = True
         elif diagCheck:
             diagAlign = True
         else:
-            rotateRight(3,selectSimmer)
+            rotateRight(15,selectSimmer)
+            degreesRotated = degreesRotated + 15
                     #print('Rotation Complete')
                 #else:
                     #print('Still Rotating')
 
-    #if diagAlign:
-        #print('Diagonally Aligned')
-    #else:
-        #print('Wall Aligned')
+    if diagAlign:
+        print('Diagonally Aligned')
+    else:
+        print('Wall Aligned')
 
-    #print('Degrees Rotated: '+str(degreesRotated))
+    print('Degrees Rotated: '+str(degreesRotated))
 
     if located:
         if wallAlign:
@@ -517,6 +540,7 @@ def align(located,selectSimmer):
         minLockListIndex = lockList.index(min(lockList))
         realignRotate = turnList[minLockListIndex]
         #print('r0-'+str(realignRotate))
+        print('Rotating back: '+str(realignRotate))
         rotateRight(realignRotate, selectSimmer)
                 #print('Rotation Complete')
             #else:
@@ -539,6 +563,8 @@ def align(located,selectSimmer):
     return()
 
 def center(selectSimmer):
+    print('')
+    print('Beginning center')
     readings = sensorSweep(10, selectSimmer)
     for i in range(len(readings)):
         while readings[i] > 12:
@@ -565,7 +591,13 @@ def center(selectSimmer):
         lrDifference = 0
 
     moveForward(fbDifference/2, selectSimmer)
-    moveRight(lrDifference/2, selectSimmer)
+    if selectSimmer:
+        moveRight(lrDifference/2, selectSimmer)
+    #else:
+        #if lrDifference > 0:
+            #rotateRight(5, selectSimmer)
+        #else:
+            #rotateLeft(5, selectSimmer)
 
     return()
 #ct = 0
@@ -603,6 +635,7 @@ def center(selectSimmer):
 def roomDetector(selectSimmer):
     information = sensorSweep(10, selectSimmer)
     modInformation = [((information[0]+information[1])/2),information[2],information[3],information[4]]
+    print(modInformation)
     numberOfWalls = 0
     roomSequence = [True, True, True, True]
     for i in range(len(modInformation)):
@@ -615,7 +648,7 @@ def roomDetector(selectSimmer):
     if numberOfWalls == 3:
         roomType = 'D'
     elif numberOfWalls == 2:
-        #print(roomSequence)
+        print(roomSequence)
         if roomSequence == [True, False, False, True] or roomSequence == [False, True, True, False]:
             roomType = 'H'
         else:
@@ -686,14 +719,16 @@ def localizer(selectSimmer):
     locationList = findNewLocations(locationList,maze,roomType,True)
 
     while not localized:
-        #input('Next Step: ')
+        input('Next Step: ')
         information = sensorSweep(10, selectSimmer)
-        if information[0] < 12 or information[1] < 12:
+        if (information[0]+information[1])/2 < 8:
             align(True, selectSimmer)
-            if information[3] < 12:
-                rotateLeft(90, selectSimmer)
-            else:
+            if information[3] < 8:
+                print('Rotating Right')
                 rotateRight(90, selectSimmer)
+            else:
+                print('Rotating Left')
+                rotateLeft(90, selectSimmer)
             center(selectSimmer)
         else:
             moveForward(12, selectSimmer)
@@ -811,6 +846,58 @@ def moveWest(robotLocation, selectSimmer):
     newLocation = str(locationData[0])+str(locationData[1])+'W'
     return(newLocation)
 
+def orientNorth(robotLocation, selectSimmer):
+    locationData = [*robotLocation]
+    if locationData != 'N':
+        align(True, selectSimmer)
+    if locationData[2] == 'W':
+        rotateRight(90)
+    elif locationData[2] == 'S':
+        rotateRight(180)
+    elif locationData[2] == 'E':
+        rotateLeft(90)
+    newLocation = str(locationData[0])+str(locationData[1])+'N'
+    return(newLocation)
+
+def orientEast(robotLocation, selectSimmer):
+    locationData = [*robotLocation]
+    if locationData != 'E':
+        align(True, selectSimmer)
+    if locationData[2] == 'N':
+        rotateRight(90)
+    elif locationData[2] == 'W':
+        rotateRight(180)
+    elif locationData[2] == 'S':
+        rotateLeft(90)
+    newLocation = str(locationData[0])+str(locationData[1])+'E'
+    return(newLocation)
+
+def orientSouth(robotLocation, selectSimmer):
+    locationData = [*robotLocation]
+    if locationData != 'S':
+        align(True, selectSimmer)
+    if locationData[2] == 'E':
+        rotateRight(90)
+    elif locationData[2] == 'N':
+        rotateRight(180)
+    elif locationData[2] == 'W':
+        rotateLeft(90)
+    newLocation = str(locationData[0])+str(locationData[1])+'S'
+    return(newLocation)
+
+def orientWest(robotLocation, selectSimmer):
+    locationData = [*robotLocation]
+    if locationData != 'W':
+        align(True, selectSimmer)
+    if locationData[2] == 'S':
+        rotateRight(90)
+    elif locationData[2] == 'E':
+        rotateRight(180)
+    elif locationData[2] == 'N':
+        rotateLeft(90)
+    newLocation = str(locationData[0])+str(locationData[1])+'W'
+    return(newLocation)
+    
 def blockSweep(selectSimmer):
     angles=[]
     center(selectSimmer)
@@ -869,7 +956,8 @@ def travelToLoadingZone(robotLocation, selectSimmer):
     return(robotLocation, blockFound, angleFromCenter)
 
 def blockFinder(robotLocation, selectSimmer):
-    return()
+    locationData = [*robotLocation]
+    
 
 ############
 ### MAIN ###
@@ -878,7 +966,7 @@ def blockFinder(robotLocation, selectSimmer):
 #input('Begin Sequence: ')
 identifier = input('R for robot, S for simmer: ')
 if identifier == 'R':
-    robot = Team_11_Client('COM13', 2000)
+    robot = Team_11_Client('COM5', 10)
 
     time.sleep(2)
 
