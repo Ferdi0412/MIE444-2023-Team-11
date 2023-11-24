@@ -36,14 +36,14 @@ def _cm_to_inch(val: float) -> float:
 class Team_11_Robot:
     def __init__(self, com_port: str, serial_timeout: float):
         self._com = _serial.Serial(com_port, timeout=serial_timeout, write_timeout=1000)
-        print(f"Connected on {com_port}!")
+        # print(f"Connected on {com_port}!")
 
 
 
     def write(self, msg: bytes) -> None:
         # print(f"[Sender] -> {msg}")
         self._com.write(msg)
-        print(msg)
+        # print(msg)
 
 
     def readline(self) -> bytes:
