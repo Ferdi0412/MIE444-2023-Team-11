@@ -55,7 +55,7 @@ def encode_counter_clockwise(angle: float) -> bytes:
     return b"Q" + ((_config.DATA_PREFIX + _encode_int(angle * _config.TIME_TO_ANGLE + _config.TIME_OFFSET)) if angle is not None else b"")
 
 def encode_stop() -> bytes:
-    return b"S"
+    return b"X"
 
 def encode_gripper_close() -> bytes:
     return b"GC"
