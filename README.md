@@ -20,52 +20,53 @@ See [python-readme](https://github.com/Ferdi0412/MIE444-2023-Team-11/blob/main/p
 - [ ] Complete obstacle avoidance
 - **Localization**
 - [x] Determine algorithm
-- [ ] Implement with Simmer.py
-- [ ] Translate to work with robot
+- [ ] ~~Implement with Simmer.py~~
+- [ ] ~~Translate to work with robot~~
 - [ ] Complete automated localization
 - **Block Pickup**
 - [ ] Determine search for block algorithm
 - [ ] Find block in Simmer.py
 - [ ] Find block in real maze
-- [ ] Combine with arm operation
-- [ ] Bring block to end-zone
+- [ ] ~~Combine with arm operation~~
+- [ ] ~~Bring block to end-zone~~
 ## Robot State
 - **Manufacturing**
 - [x] Wheel base assembly
 - [x] Sensor base assembly
-- [ ] Arm & gripper assembly
-- [ ] Create brackets for all boards on robot
+- [ ] ~~Arm & gripper assembly~~
+- [ ] ~~Create brackets for all boards on robot~~
 - **Motor**
 - [x] Get arduino to control 4 motors
 - [x] Attach to wheels, robot
-- [ ] Evaluate 4-controller (1 per motor) setup
-- [ ] Setup "emergency stop" logic
-- [ ] Enable "progress" to be returned
-- [ ] Callibrate motion
-- [ ] Adapt speeds during motion - to account for rotations/errorsa/misalignments
+- [x] Evaluate 4-controller (1 per motor) setup [FAILED]
+- [ ] ~~Setup "emergency stop" logic~~
+- [x] Enable "progress" to be returned
+- [x] Callibrate motion
+- [ ] ~~Adapt speeds during motion - to account for rotations/errorsa/misalignments~~
 - **Sensor**
 - [x] Get arduino to control Ultrasonic Sensors
 - [x] Calibrate US sensors for distance
+- [ ] Setup time-of-flight sensors
 - [ ] Get arduino to control Gyroscope
 - [ ] Calibrate Gyro for accel
 - [ ] Attach to robot
 - **Robot Bluetooth**
 - [x] Setup ESP32 to communicate over bluetooth
-- [ ] Setup pass-along logic to pass messagea to Arduinos
-- **Bluetooth Node**
-- [ ] Setup bluetooth "node", exposing data in socket on comouter
-- [ ] Setup "master" logic for where to accept control inputs (from control software, or from manual input)
+- [x] Setup pass-along logic to pass messages to Arduinos
+- ~~**Bluetooth Node**~~
+- [ ] ~~Setup bluetooth "node", exposing data in socket on comouter~~
+- [ ] ~~Setup "master" logic for where to accept control inputs (from control software, or from manual input)~~
 - **Visualization**
 - [x] Setup visual for motor relative to current ultrasonic walls
-- [ ] Setup wheel speed motion representation
-- [x] Setup input detection (W, A, S, D, Q, E)
+- [ ] ~~Setup wheel speed motion representation~~
+- [x] Setup input detection (W, S, Q, E)
 - [ ] Setup wall "history" view
 - [ ] Setup localization visualization
-- **Arm**
-- [ ] Print arm
-- [ ] Assemble arm
-- [ ] Program arm
-- [ ] Calibrate arm with ultrasonic sensor
+- ~~**Arm**~~
+- [ ] ~~Print arm~~
+- [ ] ~~Assemble arm~~
+- [ ] ~~Program arm~~
+- [ ] ~~Calibrate arm with ultrasonic sensor~~
 
 # Architecture
 Makibg a robot to navigate a maze. We are currently using:
