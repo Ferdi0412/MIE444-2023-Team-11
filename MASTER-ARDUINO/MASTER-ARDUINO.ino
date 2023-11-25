@@ -21,14 +21,17 @@
 #define FR_TRIG 33
 #define R_TRIG 35
 #define B_TRIG 37
-#define L_TRIG 39
-#define G_TRIG 41
+#define LB_TRIG 39
+#define LF_TRIG 41
+#define BR_TRIG 43
+
 #define FL_ECHO A0
 #define FR_ECHO A1
 #define R_ECHO A2
 #define B_ECHO A3
-#define L_ECHO A4
-#define G_ECHO A5
+#define LB_ECHO A4
+#define LF_ECHO A5
+#define BR_ECHO A6
 
 // According to doc (https://www.arduino.cc/reference/en/language/functions/analog-io/analogwrite/), the ..._SET pins have PWM capability
 #define ARM_SET  44
@@ -46,9 +49,9 @@
 #define SPEED_L 0.905
 #define SPEED_R 1.0
 
-#define LIN_SPEED 160
+#define LIN_SPEED 140
 #define LIN_DURATION 600
-#define ROT_SPEED 120
+#define ROT_SPEED 110
 #define ROT_DURATION 300
 
 #define DATA_BYTE '~'
@@ -89,7 +92,7 @@ unsigned long motor_L_end = 0;
 unsigned long motor_R_stopped = 0;
 unsigned long motor_L_stopped = 0;
 
-unsigned int time[6];
+unsigned int time[7];
 int distance[7];
 
 
@@ -376,16 +379,17 @@ unsigned int SensorPulseDuration(int trigPin, int echoPin) {
 void sense() {
   time[0] = SensorPulseDuration(FL_TRIG, FL_ECHO);
   delay(US_DELAY);
-  time[1] = SensorPulseDuration(FR_TRIG, FR_ECHO);
+  time[5] = SensorPulseDuration(LB_TRIG, LB_ECHO);
   delay(US_DELAY);
   time[2] = SensorPulseDuration(R_TRIG, R_ECHO);
   delay(US_DELAY);
   time[3] = SensorPulseDuration(B_TRIG, B_ECHO);
   delay(US_DELAY);
-  time[4] = SensorPulseDuration(L_TRIG, L_ECHO);
+  time[1] = SensorPulseDuration(FR_TRIG, FR_ECHO);
   delay(US_DELAY);
-  time[5] = SensorPulseDuration(G_TRIG, G_ECHO);
+  time[4] = SensorPulseDuration(LF_TRIG, LF_ECHO);
   delay(US_DELAY);
+  time[6] = SensorPulseDuration(BR_TRIG, BR_ECHO);
 }
 
 void compute_distances() {
@@ -395,6 +399,7 @@ void compute_distances() {
   distance[3] = time[3] * TIME_TO_DIST;
   distance[4] = time[4] * TIME_TO_DIST;
   distance[5] = time[5] * TIME_TO_DIST;
+  distance[6] = time[6] * TIME_TO_DIST;
 }
 
 void send_ultrasonics() {
@@ -414,7 +419,9 @@ void send_ultrasonics() {
   ComputerSerial.print(";4_");
   ComputerSerial.print(distance[4]);
   ComputerSerial.print(";5_");
-  ComputerSerial.println(distance[5]);
+  ComputerSerial.print(distance[5]);
+  ComputerSerial.print(";6_");
+  ComputerSerial.println(distance[6]);
 }
 
 
@@ -558,9 +565,9 @@ void setup() {
   pinMode(FR_TRIG, OUTPUT);  pinMode(FR_ECHO, INPUT);
   pinMode(R_TRIG, OUTPUT);   pinMode(R_ECHO,  INPUT);
   pinMode(B_TRIG, OUTPUT);   pinMode(B_ECHO,  INPUT);
-  pinMode(L_TRIG, OUTPUT);   pinMode(L_ECHO,  INPUT);
-  pinMode(G_TRIG, OUTPUT);   pinMode(G_ECHO,  INPUT);
-  
+  pinMode(LF_TRIG, OUTPUT);  pinMode(LF_ECHO, INPUT);
+  pinMode(LB_TRIG, OUTPUT);  pinMode(LB_ECHO, INPUT);
+  pinMode(BR_TRIG, OUTPUT);  pinMode(BR_ECHO, INPUT);
   pinMode(GRIP_SET, OUTPUT); pinMode(ARM_SET,  OUTPUT);
 }
 
