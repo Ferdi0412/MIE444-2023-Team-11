@@ -27,7 +27,7 @@ class Directions:
     SOUTH = '↓'
     NORTH = '↑'
 
-def generate_graph():
+def _generate_graph():
     global GRAPH
     GRAPH = _nx.Graph()
 
@@ -46,11 +46,16 @@ def generate_graph():
 
     pos = {(i, j): (j, -i) for i in range(OPEN.shape[0]) for j in range(OPEN.shape[1])}
 
-    _nx.draw(GRAPH, pos, with_labels=True, node_size=700, font_size=8, font_color='white', node_color='skyblue')
+    # _nx.draw(GRAPH, pos, with_labels=True, node_size=700, font_size=8, font_color='white', node_color='skyblue')
 
-    _plt.draw()
+    # _plt.draw()
 
-    _plt.pause(0.001)
+    # _plt.pause(0.001)
+
+
+
+def setup() -> None:
+    _generate_graph()
 
 
 
@@ -63,7 +68,7 @@ def get_shortest_path(start: tuple[int, int], end: tuple[int, int]) -> list[tupl
 ### TEST ###
 ############
 if __name__ == '__main__':
-    generate_graph()
+    _generate_graph()
     print(get_shortest_path((0, 0), (3, 7)))
 
     input("[ENTER] to exit...")

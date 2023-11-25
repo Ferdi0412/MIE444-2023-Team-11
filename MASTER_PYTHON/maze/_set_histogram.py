@@ -1,4 +1,4 @@
-"""Implementation of HISTOGRAM_2D as presented in lecture."""
+"""Histogram, but everything uses sets to check positions."""
 ######################
 ### BASE LIBRARIES ###
 ######################
@@ -19,8 +19,8 @@ _=sys.path.pop()
 #################
 ### CONSTANTS ###
 #################
-MASK = _np.pad( OPEN, 1, 'constant', constant_values=0 )
-MAZE = _np.zeros(OPEN.shape)
+WALLS = _np.pad( ((OPEN - 1) * -1), 1, 'constant', constant_values=1 )
+MAZE  = None
 
 KERNEL = _np.array([[0.1, 0.1, 0.1],
                     [0.1, 0.8, 0.1],
@@ -35,28 +35,22 @@ RESOLUTION = 12
 ### FUNCTIONS ###
 #################
 def _generate_MAZE(resolution):
-    """resolution := how many increments per block in maze."""
+    """Initialize MAZE."""
     global MAZE
-    maze = _np.zeros( OPEN.shape )
+    maze = _np.zeros( OPEN.shape, dtype=_np.object_ )
     for row in range( 1, maze.shape[0] + 1 ):
         for col in range( 1, maze.shape[1] + 1):
-            east   = not MASK[row, col - 1]
-            west   = not MASK[row, col + 1]
-            north  = not MASK[row - 1, col]
-            south  = not MASK[row + 1, col]
+            if WALLS[row, col]:
+                continue
 
-            if not MASK[row, col]:
-                maze[row-1, col-1] = 0
+            east  = _np.argmax( WALLS[row, col-1 :: -1] )
+            west  = _np.argmax( WALLS[row, col+1 :    ] )
+            north = _np.argmax( WALLS[row-1 :: -1, col] )
+            south = _np.argmax( WALLS[row+1 :,     col] )
 
-            elif not any([east, west, north, south]):
-                maze[row-1, col-1] = 4
-
-            elif ((north == south) and (east == west)): ## opposites:
-                maze[row-1, col-1] = 5
-
-            else:
-                maze[row-1, col-1] = 4 - sum([east, west, north, south])
+            maze[row-1, col-1] = set([east, west, north, south])
     MAZE = _np.repeat( _np.repeat( maze, resolution, axis=1 ), resolution, axis=0 )
+
 
 
 def setup():
@@ -64,32 +58,17 @@ def setup():
 
 
 
-
-def check_position(front, right, back, left) -> int:
-    """Pass in sensor readings."""
-    if not any([front, right, left, back]):
-        return 4
-
-    elif (front == back) and (left == right):
-        return 5
-
-    else:
-        return sum([front, left, back, right])
-
-
-
-def try_locate(position: int, probabilities: _np.array) -> _np.array:
-    """Update probabilities array. MEASURE step of histogram."""
+def try_locate(probabilities: _np.array, fwd_blocks, right_blocks, back_blocks, left_blocks):
     if probabilities is None:
         probabilities = _np.ones( MAZE.shape )
 
     p_update = _np.ones( MAZE.shape, _np.float64 ) * P_MISS
 
-    p_update[ MAZE == position ] = P_HIT
+    p_update[ MAZE == set([fwd_blocks, right_blocks, back_blocks, left_blocks])] = P_HIT
 
     #p_update[ MAZE == 0 ] = 0
 
-    probabilities = _np.multiply(p_update, probabilities )
+    probabilities = _np.multiply(p_update, probabilities)
 
     probabilities /= _np.sum(probabilities)
 
@@ -148,12 +127,17 @@ def draw(probabilities: _np.array) -> None:
 ############
 if __name__ == '__main__':
     _generate_MAZE(3)
+
+    # draw(WALLS[1:-1,1:-1])
+    # input("Next... [ENTER]")
+
     # print(MAZE)
     # plt.matshow(MAZE)
-    probs = try_locate(2, None)
+    probs = try_locate(None, 0, 0, 3, 5)
     draw(probs)
     input("Next... [ENTER]")
-    probs = try_locate(3, apply_movement_filter(1, 0, probs))
+    probs = try_locate(apply_movement_filter(3, 0, probs), 0, 0, 1, 4)
+    probs = try_locate(apply_movement_filter(3, 0, probs), 0, 0, 1, 4)
     draw(probs)
     print(get_locations(probs))
     input("Exit... [ENTER]")
