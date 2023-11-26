@@ -43,6 +43,8 @@
 #define TOF_R  0x32
 #define TOF_R_X  48
 
+#define TOF_TIMEOUT 50
+
 // === ULTRAONIC CONFIG.... ===
 #define US_DELAY     10
 #define TIME_TO_DIST (0.034 * 0.5)
@@ -87,9 +89,9 @@
 /* ==================
    VARS
    ================== */
-VL53L0X sensor_right;
-VL53L0X sensor_front_left;
-VL53L0X sensor_back_left;
+VL53L0X sensor_R;
+VL53L0X sensor_FL;
+VL53L0X sensor_BL;
 
 // Timestamps to turn off motors...
 unsigned long motor_R_start = 0;
@@ -194,6 +196,8 @@ void scan_i2c_devices() {
 
 
 char set_i2c_addr( int old_addr, int new_addr, int xshut_pin ) {
+  pinMode(xshut_pin, OUTPUT);
+
   Wire.beginTransmission( old_addr );
   Wire.write( 0x8A );
   Wire.write( new_addr );
@@ -205,6 +209,7 @@ char set_i2c_addr( int old_addr, int new_addr, int xshut_pin ) {
   delay(10);
   digitalWrite( xshut_pin, HIGH );
 
+  pinMode(xshut_pin, OUTPUT);
 }
 
 
@@ -461,6 +466,20 @@ void send_ultrasonics() {
 
 
 /* =================
+   TIME OF FLIGHT 
+   ================= */
+void print_time_of_flight() {
+  Serial.print("T_R_");
+  Serial.print(sensor_R.readRangeSingleMillimeters());
+  Serial.print(";BL_");
+  Serial.print(sensor_BL.readRangeSingleMillimeters());
+  Serial.print(";FL_");
+  Serial.println(sensor_FL.readRangeSingleMillimeters());
+}
+
+
+
+/* =================
    SERIAL
    ================= */
 void receive_send() {
@@ -539,9 +558,6 @@ void receive_send() {
           if ((!read_uchar(&r)) && (!read_uchar(&g)) && (!read_uchar(&b))) {  // Add block_until_char_avail_count(...)???
             set_led((int)r, (int)g, (int)b);
             ComputerSerial.println(LED_ACK);
-            ComputerSerial.println(r);
-            ComputerSerial.println(g);
-            ComputerSerial.println(b);
           } else { /* Otherwise, assume values are 0 */
             set_led(0, 0, 0);
             ComputerSerial.println(LED_ACK);
@@ -584,6 +600,11 @@ void receive_send() {
         scan_i2c_devices();
         break;
       }
+
+      case 'T': {
+        print_time_of_flight();
+        break;
+      }
     }
   }
 }
@@ -614,15 +635,16 @@ void setup() {
   pinMode(LF_TRIG, OUTPUT);  pinMode(LF_ECHO, INPUT);
   pinMode(LB_TRIG, OUTPUT);  pinMode(LB_ECHO, INPUT);
   // pinMode(GRIP_SET, OUTPUT); pinMode(ARM_SET,  OUTPUT);
-
-  pinMode(TOF_FL_X, OUTPUT);
-  pinMode(TOF_BL_X, OUTPUT);
-  pinMode(TOF_R_X,  OUTPUT);
   
   delay(100);
-  set_i2c_addr( 0x29, 0x32, TOF_R_X  );
-  set_i2c_addr( 0x29, 0x34, TOF_BL_X );
-  set_i2c_addr( 0x29, 0x33, TOF_FL_X );
+
+  set_i2c_addr( 0x29, TOF_R,  TOF_R_X  );
+  set_i2c_addr( 0x29, TOF_BL, TOF_BL_X );
+  set_i2c_addr( 0x29, TOF_FL, TOF_FL_X );
+
+  sensor_R.init();  sensor_R.setAddress(TOF_R);   sensor_R.setTimeout(TOF_TIMEOUT);
+  sensor_BL.init(); sensor_BL.setAddress(TOF_BL); sensor_BL.setTimeout(TOF_TIMEOUT);
+  sensor_FL.init(); sensor_FL.setAddress(TOF_FL); sensor_FL.setTimeout(TOF_TIMEOUT);
 }
 
 
