@@ -1,4 +1,4 @@
-#define ComputerSerial Serial3  // Change to Serial for computer control; Serial3 for bluetooth control;
+#define ComputerSerial Serial  // Change to Serial for computer control; Serial3 for bluetooth control;
 
 
 
@@ -7,42 +7,43 @@
    ==================== */
 #define IN_L_1 22
 #define IN_L_2 24
-#define EN_L 9
+#define EN_L   9
 
-#define IN_R_1 50
-#define IN_R_2 52
-#define EN_R 11
+#define IN_R_1 23
+#define IN_R_2 25
+#define EN_R   10
 
+// LEDs need PWM
 #define LED_R 3
 #define LED_G 5
 #define LED_B 6
 
-#define FL_TRIG 31
-#define FR_TRIG 33
-#define R_TRIG 35
-#define B_TRIG 37
-#define LB_TRIG 39
-#define LF_TRIG 41
-#define BR_TRIG 43
-
-#define FL_ECHO A0
-#define FR_ECHO A1
-#define R_ECHO A2
-#define B_ECHO A3
-#define LB_ECHO A4
-#define LF_ECHO A5
-#define BR_ECHO A6
+#define F_TRIG 31
+#define F_ECHO A8
+#define B_TRIG 33
+#define B_ECHO A9
+#define LB_TRIG 35
+#define LB_ECHO A10
+#define LF_TRIG 37
+#define LF_ECHO A11
 
 // According to doc (https://www.arduino.cc/reference/en/language/functions/analog-io/analogwrite/), the ..._SET pins have PWM capability
-#define ARM_SET  44
-#define GRIP_SET 46
+// #define ARM_SET  44
+// #define GRIP_SET 46
 
 
-// ULTRAONIC CONFIG....
+#define TOF_FL 0x30
+#define TOF_FL_X 52
+#define TOF_BL 0x31
+#define TOF_BL_X 51
+#define TOF_R  0x32
+#define TOF_R_X  50
+
+// === ULTRAONIC CONFIG.... ===
 #define US_DELAY     10
 #define TIME_TO_DIST (0.034 * 0.5)
 
-// MOTION CONFIG...
+// === MOTION CONFIG... ===
 #define RAMP_STEPS 3
 #define RAMP_DELAY 50
 
@@ -56,7 +57,7 @@
 
 #define DATA_BYTE '~'
 
-// SERIAL CONFIG....
+// === SERIAL CONFIG.... ===
 #define W_ACK    "W-ACK"
 #define S_ACK    "S-ACK"
 #define Q_ACK    "Q-ACK"
@@ -71,11 +72,11 @@
 #define READ_RETRIES 2
 #define READ_DELAY 2
 
-// GRIPPER CONFIG...
-#define ARM_DOWN    0
-#define ARM_UP      255
-#define GRIP_OPEN   0
-#define GRIP_CLOSED 255
+// === GRIPPER CONFIG... ===
+// #define ARM_DOWN    0
+// #define ARM_UP      255
+// #define GRIP_OPEN   0
+// #define GRIP_CLOSED 255
 
 
 
@@ -92,8 +93,8 @@ unsigned long motor_L_end = 0;
 unsigned long motor_R_stopped = 0;
 unsigned long motor_L_stopped = 0;
 
-unsigned int time[7];
-int distance[7];
+unsigned int time[4];
+int distance[4];
 
 
 
@@ -309,56 +310,56 @@ int is_completed() {
 /* =================
    GRIPPERS 
    ================= */
-void set_gripper( int open ) {
-  if ( open )
-    analogWrite( GRIP_SET, GRIP_OPEN );
-  else
-    analogWrite( GRIP_SET, GRIP_CLOSED );
-}
+// void set_gripper( int open ) {
+//   if ( open )
+//     analogWrite( GRIP_SET, GRIP_OPEN );
+//   else
+//     analogWrite( GRIP_SET, GRIP_CLOSED );
+// }
 
-void set_arm( int up_state ) {
-  if ( up_state )
-    analogWrite( ARM_SET, ARM_UP );
-  else
-    analogWrite( ARM_SET, ARM_DOWN);
-  if ( up_state ) 
-    ComputerSerial.println("Setting arm UP!");
-  else
-    ComputerSerial.println("Setting arm DOWN!");
-}
+// void set_arm( int up_state ) {
+//   if ( up_state )
+//     analogWrite( ARM_SET, ARM_UP );
+//   else
+//     analogWrite( ARM_SET, ARM_DOWN);
+//   if ( up_state ) 
+//     ComputerSerial.println("Setting arm UP!");
+//   else
+//     ComputerSerial.println("Setting arm DOWN!");
+// }
 
-void gripper_receive_command() {
-  char motion = blocking_peek();
-    switch ( motion ) {
-      case 'U': { /* UP */
-        set_arm(1);
-        break;
-      }
+// void gripper_receive_command() {
+//   char motion = blocking_peek();
+//     switch ( motion ) {
+//       case 'U': { /* UP */
+//         set_arm(1);
+//         break;
+//       }
 
-      case 'D' : { /* DOWN */
-        set_arm(0);
-        break;
-      }
+//       case 'D' : { /* DOWN */
+//         set_arm(0);
+//         break;
+//       }
 
-      case 'O' : { /* OPEN */
-        set_gripper(1);
-        break;
-      }
+//       case 'O' : { /* OPEN */
+//         set_gripper(1);
+//         break;
+//       }
 
-      case 'C' : { /*CLOSED */
-        set_gripper(0);
-        break;
-      }
+//       case 'C' : { /*CLOSED */
+//         set_gripper(0);
+//         break;
+//       }
 
-      default : {
-        /* Return without ACK */
-        return;
-      }
-    }
-    // Remove byte from buffer, send ACK
-    motion = ComputerSerial.read();
-    ComputerSerial.println(GRIP_ACK);
-}
+//       default : {
+//         /* Return without ACK */
+//         return;
+//       }
+//     }
+//     // Remove byte from buffer, send ACK
+//     motion = ComputerSerial.read();
+//     ComputerSerial.println(GRIP_ACK);
+// }
 
 
 
@@ -377,19 +378,14 @@ unsigned int SensorPulseDuration(int trigPin, int echoPin) {
 }
 
 void sense() {
-  time[0] = SensorPulseDuration(FL_TRIG, FL_ECHO);
+  time[0] = SensorPulseDuration(F_TRIG, F_ECHO);
   delay(US_DELAY);
-  time[5] = SensorPulseDuration(LB_TRIG, LB_ECHO);
+  time[2] = SensorPulseDuration(LB_TRIG, LB_ECHO);
   delay(US_DELAY);
-  time[2] = SensorPulseDuration(R_TRIG, R_ECHO);
+  time[3] = SensorPulseDuration(LF_TRIG, LF_ECHO);
   delay(US_DELAY);
-  time[3] = SensorPulseDuration(B_TRIG, B_ECHO);
+  time[1] = SensorPulseDuration(B_TRIG, B_ECHO);
   delay(US_DELAY);
-  time[1] = SensorPulseDuration(FR_TRIG, FR_ECHO);
-  delay(US_DELAY);
-  time[4] = SensorPulseDuration(LF_TRIG, LF_ECHO);
-  delay(US_DELAY);
-  time[6] = SensorPulseDuration(BR_TRIG, BR_ECHO);
 }
 
 void compute_distances() {
@@ -397,9 +393,6 @@ void compute_distances() {
   distance[1] = time[1] * TIME_TO_DIST;
   distance[2] = time[2] * TIME_TO_DIST;
   distance[3] = time[3] * TIME_TO_DIST;
-  distance[4] = time[4] * TIME_TO_DIST;
-  distance[5] = time[5] * TIME_TO_DIST;
-  distance[6] = time[6] * TIME_TO_DIST;
 }
 
 void send_ultrasonics() {
@@ -415,13 +408,7 @@ void send_ultrasonics() {
   ComputerSerial.print(";2_");
   ComputerSerial.print(distance[2]);
   ComputerSerial.print(";3_");
-  ComputerSerial.print(distance[3]);
-  ComputerSerial.print(";4_");
-  ComputerSerial.print(distance[4]);
-  ComputerSerial.print(";5_");
-  ComputerSerial.print(distance[5]);
-  ComputerSerial.print(";6_");
-  ComputerSerial.println(distance[6]);
+  ComputerSerial.println(distance[3]);
 }
 
 
@@ -505,6 +492,9 @@ void receive_send() {
           if ((!read_uchar(&r)) && (!read_uchar(&g)) && (!read_uchar(&b))) {  // Add block_until_char_avail_count(...)???
             set_led((int)r, (int)g, (int)b);
             ComputerSerial.println(LED_ACK);
+            ComputerSerial.println(r);
+            ComputerSerial.println(g);
+            ComputerSerial.println(b);
           } else { /* Otherwise, assume values are 0 */
             set_led(0, 0, 0);
             ComputerSerial.println(LED_ACK);
@@ -513,10 +503,10 @@ void receive_send() {
         }
 
       
-      case 'G' : { /* GRIPPER */
-        gripper_receive_command();
-        break;
-      }
+      // case 'G' : { /* GRIPPER */
+      //   gripper_receive_command();
+      //   break;
+      // }
 
 
       case 'P':
@@ -561,14 +551,11 @@ void setup() {
 
   pinMode(LED_R, OUTPUT);    pinMode(LED_G, OUTPUT);    pinMode(LED_B, OUTPUT);
 
-  pinMode(FL_TRIG, OUTPUT);  pinMode(FL_ECHO, INPUT);
-  pinMode(FR_TRIG, OUTPUT);  pinMode(FR_ECHO, INPUT);
-  pinMode(R_TRIG, OUTPUT);   pinMode(R_ECHO,  INPUT);
-  pinMode(B_TRIG, OUTPUT);   pinMode(B_ECHO,  INPUT);
+  pinMode(F_TRIG,  OUTPUT);  pinMode(F_ECHO,  INPUT);
+  pinMode(B_TRIG,  OUTPUT);  pinMode(B_ECHO,  INPUT);
   pinMode(LF_TRIG, OUTPUT);  pinMode(LF_ECHO, INPUT);
   pinMode(LB_TRIG, OUTPUT);  pinMode(LB_ECHO, INPUT);
-  pinMode(BR_TRIG, OUTPUT);  pinMode(BR_ECHO, INPUT);
-  pinMode(GRIP_SET, OUTPUT); pinMode(ARM_SET,  OUTPUT);
+  // pinMode(GRIP_SET, OUTPUT); pinMode(ARM_SET,  OUTPUT);
 }
 
 
