@@ -3,8 +3,14 @@
 ## /automation
 Automation of robot, to be implemented.
 
+
+
 ## /connector
 Serial control of robot. Setup works well with Windows, should work with Apple (just the serial com port is different syntactically).
+
+```bash
+pip install pyserial
+```
 
 ```python
 from connector import Team_11_Robot
@@ -32,7 +38,12 @@ print(robot.ultrasonic_json(5)) # 5 readings from each sensor
 Localization and navigation of maze.
 
 - histogram (setup for after aligning and orientating)
+= histogram_distance (setup for after aligning and orientating)
 - pathfinding (setup for localizing)
+
+```bash
+pip install install numpy scipy matplotlib networkx
+```
 
 ```python
 from maze import histogram
