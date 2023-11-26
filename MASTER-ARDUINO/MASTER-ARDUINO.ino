@@ -20,12 +20,12 @@
 
 #define F_TRIG 31
 #define F_ECHO A8
-#define B_TRIG 33
-#define B_ECHO A9
+#define B_TRIG 37
+#define B_ECHO A11
 #define LB_TRIG 35
 #define LB_ECHO A10
-#define LF_TRIG 37
-#define LF_ECHO A11
+#define LF_TRIG 33
+#define LF_ECHO A9
 
 // According to doc (https://www.arduino.cc/reference/en/language/functions/analog-io/analogwrite/), the ..._SET pins have PWM capability
 // #define ARM_SET  44
