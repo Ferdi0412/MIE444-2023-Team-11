@@ -1,3 +1,7 @@
+#include <Wire.h>
+#include <VL53L0X.h>
+
+
 #define ComputerSerial Serial  // Change to Serial for computer control; Serial3 for bluetooth control;
 
 
@@ -33,11 +37,11 @@
 
 
 #define TOF_FL 0x30
-#define TOF_FL_X 52
+#define TOF_FL_X 51
 #define TOF_BL 0x31
-#define TOF_BL_X 51
+#define TOF_BL_X 50
 #define TOF_R  0x32
-#define TOF_R_X  50
+#define TOF_R_X  48
 
 // === ULTRAONIC CONFIG.... ===
 #define US_DELAY     10
@@ -83,6 +87,10 @@
 /* ==================
    VARS
    ================== */
+VL53L0X sensor_right;
+VL53L0X sensor_front_left;
+VL53L0X sensor_back_left;
+
 // Timestamps to turn off motors...
 unsigned long motor_R_start = 0;
 unsigned long motor_L_start = 0;
@@ -105,6 +113,9 @@ int apply_factor(int speed, float factor) {
   return int((float)speed * factor);
 }
 
+/* =================
+   SERIAL FUNCTIONS 
+   ================= */
 int read_int(int* target) {
   int val;
   char readable_flag = 0;
@@ -158,6 +169,42 @@ char blocking_peek() {
 #endif
   }
   return -1;
+}
+
+
+
+void scan_i2c_devices() {
+  ComputerSerial.print("D");
+  for ( byte i = 8; i < 127; i++ ) {
+    Wire.beginTransmission(i);
+    byte error = Wire.endTransmission();
+
+    if ( error == 0 ) {
+      ComputerSerial.print("_");
+      ComputerSerial.print("0x");
+      if ( i < 16 ) {
+        ComputerSerial.print("0");
+      }
+      ComputerSerial.print(i, HEX);
+    }
+  }
+  ComputerSerial.println("");
+}
+
+
+
+char set_i2c_addr( int old_addr, int new_addr, int xshut_pin ) {
+  Wire.beginTransmission( old_addr );
+  Wire.write( 0x8A );
+  Wire.write( new_addr );
+  Wire.endTransmission();
+
+  delay(10);
+
+  digitalWrite( xshut_pin, LOW );
+  delay(10);
+  digitalWrite( xshut_pin, HIGH );
+
 }
 
 
@@ -532,6 +579,11 @@ void receive_send() {
           }
           break;
         }
+      
+      case 'I' : {
+        scan_i2c_devices();
+        break;
+      }
     }
   }
 }
@@ -543,8 +595,14 @@ void receive_send() {
    ================= */
 #define IN_L_1 22
 void setup() {
+  Wire.begin();
+
   ComputerSerial.begin(9600);
+  delay(100);
   Serial.begin(9600);
+
+  // sensor_right.init();
+  // sensor_right.setAddress(0x29);
 
   pinMode(IN_L_1, OUTPUT);   pinMode(IN_L_2, OUTPUT);   pinMode(EN_L, OUTPUT);
   pinMode(IN_R_1, OUTPUT);   pinMode(IN_R_2, OUTPUT);   pinMode(EN_R, OUTPUT);
@@ -556,6 +614,15 @@ void setup() {
   pinMode(LF_TRIG, OUTPUT);  pinMode(LF_ECHO, INPUT);
   pinMode(LB_TRIG, OUTPUT);  pinMode(LB_ECHO, INPUT);
   // pinMode(GRIP_SET, OUTPUT); pinMode(ARM_SET,  OUTPUT);
+
+  pinMode(TOF_FL_X, OUTPUT);
+  pinMode(TOF_BL_X, OUTPUT);
+  pinMode(TOF_R_X,  OUTPUT);
+  
+  delay(100);
+  set_i2c_addr( 0x29, 0x32, TOF_R_X  );
+  set_i2c_addr( 0x29, 0x34, TOF_BL_X );
+  set_i2c_addr( 0x29, 0x33, TOF_FL_X );
 }
 
 
