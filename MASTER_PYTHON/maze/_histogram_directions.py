@@ -155,6 +155,12 @@ def rotate_90(north, east, south, west, times: int = 1) -> tuple:
 
 
 
+def rotate_90_prob_sets(prob_sets, times: int = 1) -> tuple:
+    """Returns prob_sets rotated by 90 degrees."""
+    return rotate_90(*prob_sets, times)
+
+
+
 def draw(probabilities: _np.array) -> None:
     """Display a probabilities plot."""
     plt.close()
@@ -264,7 +270,7 @@ def determine_probabilities_unknown_direction(probability_sets, fwd_blocks, righ
 def _move_robot_direction(prob, moves_north, moves_east):
     if prob is not _INVALID_DIRECTION:
         ## Y is positive in south direction
-        prob = apply_movement_filter(moves_east, -moves_north, prob, ignore_kernel=True)
+        prob = apply_movement_filter(moves_east, -moves_north, prob, ignore_kernel=False)
     return prob
 
 
@@ -330,7 +336,8 @@ if __name__ == '__main__':
         draw(p)
         input("[ENTER] to continue...\n")
     print("Now assume you move 1 block forward")
-    prob_sets = apply_movement_filter_unknown_direction(prob_sets, 12, 0)
+    prob_sets = rotate_90_prob_sets(prob_sets, 2)
+    prob_sets = apply_movement_filter_unknown_direction(prob_sets, 1, 0)
     prob_sets = determine_probabilities_unknown_direction(prob_sets, 2, 0, 1, 0)
     for i, p in enumerate(prob_sets):
         if p is _INVALID_DIRECTION:

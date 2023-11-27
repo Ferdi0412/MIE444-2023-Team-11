@@ -62,11 +62,11 @@ class RobotGraphic:
                 if text:
                     sensor.display_text(screen, text, sensor.cx + 5, sensor.cy + 5)
 
-            if text:
-                front_diff = self._sensors['FR'].latest() - self._sensors['FL'].latest()
-                txt_       = text.render(f"{front_diff:.1f}", True, BLACK, WHITE)
-                txt_rect   = txt_.get_rect(center=(self.cx, self.cy))
-                screen.blit(txt_, txt_rect)
+            # if text:
+            #     front_diff = self._sensors['FR'].latest() - self._sensors['FL'].latest()
+            #     txt_       = text.render(f"{front_diff:.1f}", True, BLACK, WHITE)
+            #     txt_rect   = txt_.get_rect(center=(self.cx, self.cy))
+            #     screen.blit(txt_, txt_rect)
 
 
 

@@ -18,9 +18,8 @@ TIME_OFFSET   = 80
 TIME_TO_DIST  = 10000 / 73 * 1 / 5 * 4
 TIME_TO_ANGLE = 40 / 2.85 / 1.37
 
-ULTR_LOOKUP = {"0": "FL",
-               "1": "FR",
-               "2": "R",
-               "3": "B",
-               "4": "LF",
-               "5": "LB"}
+ULTR_LOOKUP = {"0": "F",
+               "1": "R",
+               "2": "B",
+               "3": "BL",
+               "4": "BR",}

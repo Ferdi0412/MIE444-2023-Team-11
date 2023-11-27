@@ -20,6 +20,9 @@ _ = sys.path.pop() ## Cleanup local modules
 
 
 
+RETRIES = 5
+
+
 #########################
 ### PRIVATE FUNCTIONS ###
 #########################
@@ -35,8 +38,9 @@ def _cm_to_inch(val: float) -> float:
 ############
 class Team_11_Robot:
     def __init__(self, com_port: str, serial_timeout: float):
+        print(f"[Team_11_Robot] Attempting to connect to {com_port}")
         self._com = _serial.Serial(com_port, timeout=serial_timeout, write_timeout=2)
-        # print(f"Connected on {com_port}!")
+        print(f"[Team_11_Robot] Successfully connected on {com_port}!", end="\n\n")
 
 
 
@@ -55,12 +59,13 @@ class Team_11_Robot:
 
     def move_forward(self, distance: float = None) -> None:
         """Move forward by {distance} inches."""
+        print(distance)
         if distance > 0:
             self.write(_encode.encode_forward(distance))
-            wait_for_acknowledge(self, _config.Acknowledges.W_ACK)
+            wait_for_acknowledge(self, _config.Acknowledges.W_ACK, RETRIES)
         else:
             self.write(_encode.encode_backwards(abs(distance)))
-            wait_for_acknowledge(self, _config.Acknowledges.S_ACK)
+            wait_for_acknowledge(self, _config.Acknowledges.S_ACK, RETRIES)
 
 
 
@@ -68,24 +73,24 @@ class Team_11_Robot:
         """Rotate clockwise by {angle} degrees."""
         if angle > 0:
             self.write(_encode.encode_clockwise(angle))
-            wait_for_acknowledge(self, _config.Acknowledges.E_ACK)
+            wait_for_acknowledge(self, _config.Acknowledges.E_ACK, RETRIES)
         else:
             self.write(_encode.encode_counter_clockwise(abs(angle)))
-            wait_for_acknowledge(self, _config.Acknowledges.Q_ACK)
+            wait_for_acknowledge(self, _config.Acknowledges.Q_ACK, RETRIES)
 
 
 
     def stop(self) -> None:
         """Stop motors."""
         self.write(_encode.encode_stop())
-        wait_for_acknowledge(self, _config.Acknowledges.STOP_ACK)
+        wait_for_acknowledge(self, _config.Acknowledges.STOP_ACK, RETRIES)
 
 
 
     def is_active(self) -> bool:
         """Check if motor is in active motion."""
         self.write(_encode.encode_active())
-        reply = wait_for_replies(self, [_config.Acknowledges.ACTIVE, _config.Acknowledges.NACTIVE]).replace(b'\n', b'').replace(b'\r', b'')
+        reply = wait_for_replies(self, [_config.Acknowledges.ACTIVE, _config.Acknowledges.NACTIVE], RETRIES).replace(b'\n', b'').replace(b'\r', b'')
         if reply == _config.Acknowledges.ACTIVE:
             return True
         else:
@@ -96,26 +101,26 @@ class Team_11_Robot:
     def progress(self) -> float:
         """Return percentage progress along last move."""
         self.write(_encode.encode_progress())
-        reply = wait_for_reply(self, _config.PROG_PREFIX)
+        reply = wait_for_reply(self, _config.PROG_PREFIX, RETRIES)
         return decode_progress(reply)
 
 
 
     def led(self, r: int, g: int, b: int) -> None:
         self.write(_encode.encode_led(r, g, b))
-        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK)
+        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK, RETRIES)
 
 
 
     def led_off(self) -> None:
         self.write(_encode.encode_led(0, 0, 0))
-        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK)
+        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK, RETRIES)
 
 
 
     def ultrasonics(self) -> dict[str, float]:
         self.write(_encode.encode_ultrasonic())
-        return {key: _cm_to_inch(val) for key, val in _ultrasonic_lookup(decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX))).items()}
+        return {key: _cm_to_inch(val) for key, val in _ultrasonic_lookup(decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX, RETRIES))).items()}
 
 
 
@@ -123,7 +128,7 @@ class Team_11_Robot:
         readings = {}
         for _ in range(number_of_attempts):
             self.write(_encode.encode_ultrasonic())
-            new_vals: dict = {key: _cm_to_inch(val) for key, val in decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX)).items()}
+            new_vals: dict = {key: _cm_to_inch(val) for key, val in decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX, RETRIES)).items()}
             for sensor_id, sensor_val in new_vals.items():
                 if sensor_id not in readings:
                     readings[sensor_id] = []

@@ -25,7 +25,7 @@ class NoReply (Exception):
 def wait_for_acknowledge(serial_: _serial.Serial, ack_msg: bytes, retries: int = None) -> None:
     """Raises NoAcknowledge."""
     for _ in range(retries or 1):
-        if serial_.readline().replace(b'\n', b'').replace(b'\r', b''):
+        if serial_.readline().replace(b'\n', b'').replace(b'\r', b'') == ack_msg:
             return
     raise NoAcknowledge
 
