@@ -1,4 +1,19 @@
-"""Class for controlling robot."""
+"""Class for controlling robot.
+
+PARAMS:
+|- READ_RETRIES
+|   How many times to retry reading a motion command response.
+|- WRITE_TIMEOUT
+|   Timeout on serial.Serial(...).write(...) method.
+
+VARIABLES:
+|- CommErrors
+|   Raised by almost all Team_11_Robot methods.
+
+CLASSES:
+|- Team_11_Robot
+|   Serial pseudo-wrapper for communicating with robot.
+"""
 
 ######################
 ### BASE LIBRARIES ###
@@ -20,7 +35,14 @@ _ = sys.path.pop() ## Cleanup local modules
 
 
 
-RETRIES = 5
+##############
+### CONFIG ###
+##############
+READ_RETRIES  = 5
+WRITE_TIMEOUT = 3 # seconds
+
+CommErrors = (NoAcknowledge, NoReply)
+
 
 
 #########################
@@ -37,9 +59,41 @@ def _cm_to_inch(val: float) -> float:
 ### MAIN ###
 ############
 class Team_11_Robot:
+    """Class for connecing to robot via. Serial or via. Bluetooth.
+
+    PARAMS:
+    |- com_port <str>:
+    |        Port to connect to robot via. Eg. com_port = "COM12".
+    |- serial_timeout <float>:
+    |        Seconds timeout for reading serial values.
+
+    METHODS:
+    |- write ( msg <bytes> ) -> None:
+    |        Writes bytes over serial to robot
+    |- readline ( void ) -> bytes:
+    |        Reads '\n' terminated string from robot serial
+    |- move_forward ( distance <float> ) -> None:
+    |        Move forward by {distance} inches
+    |- rotate ( angle <float> ) -> None:
+    |        Rotate clockwise by {angle} degrees
+    |- stop ( void ):
+    |        Stop last motion command
+    |- is_active( void ) -> bool
+    |        Returns True if motor has stopped last motion, else False
+    |- progress ( void ) -> float:
+    |        Returns percentage; [0.0, 100.0]; along last motion command
+    |- led ( r <byte>, g <byte>, b <byte> ) -> None:
+    |        Set LED color. Each value in [0, 255]
+    |- led_off ( void ) -> None:
+    |        Turn LED off
+    |- ultrasonics ( void ) -> dict:
+    |        Returns dictionary of readings for each ULTRASONIC sensor
+    |- ultrasonic_json( number_of_attempts <int> ) -> dict { sensor: readings_list }:
+    |        Returns dictionary of lists of {number_of_attempts} readings
+    """
     def __init__(self, com_port: str, serial_timeout: float):
         print(f"[Team_11_Robot] Attempting to connect to {com_port}")
-        self._com = _serial.Serial(com_port, timeout=serial_timeout, write_timeout=2)
+        self._com = _serial.Serial(com_port, timeout=serial_timeout, write_timeout=WRITE_TIMEOUT)
         print(f"[Team_11_Robot] Successfully connected on {com_port}!", end="\n\n")
 
 
@@ -50,6 +104,7 @@ class Team_11_Robot:
         # print(msg)
 
 
+
     def readline(self) -> bytes:
         msg = self._com.readline()
         # print(f"[Sender] -> {msg}")
@@ -58,14 +113,15 @@ class Team_11_Robot:
 
 
     def move_forward(self, distance: float = None) -> None:
+    def move_forward(self, distance: float ) -> None:
         """Move forward by {distance} inches."""
         print(distance)
         if distance > 0:
             self.write(_encode.encode_forward(distance))
-            wait_for_acknowledge(self, _config.Acknowledges.W_ACK, RETRIES)
+            wait_for_acknowledge(self, _config.Acknowledges.W_ACK, READ_RETRIES)
         else:
             self.write(_encode.encode_backwards(abs(distance)))
-            wait_for_acknowledge(self, _config.Acknowledges.S_ACK, RETRIES)
+            wait_for_acknowledge(self, _config.Acknowledges.S_ACK, READ_RETRIES)
 
 
 
@@ -73,24 +129,24 @@ class Team_11_Robot:
         """Rotate clockwise by {angle} degrees."""
         if angle > 0:
             self.write(_encode.encode_clockwise(angle))
-            wait_for_acknowledge(self, _config.Acknowledges.E_ACK, RETRIES)
+            wait_for_acknowledge(self, _config.Acknowledges.E_ACK, READ_RETRIES)
         else:
             self.write(_encode.encode_counter_clockwise(abs(angle)))
-            wait_for_acknowledge(self, _config.Acknowledges.Q_ACK, RETRIES)
+            wait_for_acknowledge(self, _config.Acknowledges.Q_ACK, READ_RETRIES)
 
 
 
     def stop(self) -> None:
         """Stop motors."""
         self.write(_encode.encode_stop())
-        wait_for_acknowledge(self, _config.Acknowledges.STOP_ACK, RETRIES)
+        wait_for_acknowledge(self, _config.Acknowledges.STOP_ACK, READ_RETRIES)
 
 
 
     def is_active(self) -> bool:
         """Check if motor is in active motion."""
         self.write(_encode.encode_active())
-        reply = wait_for_replies(self, [_config.Acknowledges.ACTIVE, _config.Acknowledges.NACTIVE], RETRIES).replace(b'\n', b'').replace(b'\r', b'')
+        reply = wait_for_replies(self, [_config.Acknowledges.ACTIVE, _config.Acknowledges.NACTIVE], READ_RETRIES).replace(b'\n', b'').replace(b'\r', b'')
         if reply == _config.Acknowledges.ACTIVE:
             return True
         else:
@@ -101,34 +157,38 @@ class Team_11_Robot:
     def progress(self) -> float:
         """Return percentage progress along last move."""
         self.write(_encode.encode_progress())
-        reply = wait_for_reply(self, _config.PROG_PREFIX, RETRIES)
+        reply = wait_for_reply(self, _config.PROG_PREFIX, READ_RETRIES)
         return decode_progress(reply)
 
 
 
     def led(self, r: int, g: int, b: int) -> None:
+        """Set LED to R={r}; G={g}; B={b} colors."""
         self.write(_encode.encode_led(r, g, b))
-        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK, RETRIES)
+        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK, READ_RETRIES)
 
 
 
     def led_off(self) -> None:
+        """Turn LED off."""
         self.write(_encode.encode_led(0, 0, 0))
-        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK, RETRIES)
+        wait_for_acknowledge(self, _config.Acknowledges.LED_ACK, READ_RETRIES)
 
 
 
     def ultrasonics(self) -> dict[str, float]:
+        """Request a dictionary of ULTRASONIC sensor readings."""
         self.write(_encode.encode_ultrasonic())
-        return {key: _cm_to_inch(val) for key, val in _ultrasonic_lookup(decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX, RETRIES))).items()}
+        return {key: _cm_to_inch(val) for key, val in _ultrasonic_lookup(decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX, READ_RETRIES))).items()}
 
 
 
     def ultrasonic_json(self, number_of_attempts: int) -> dict[str, list[float]]:
+        """Request a dictionary of lists of length {number_of_attempts} ULTRASONIC readings."""
         readings = {}
         for _ in range(number_of_attempts):
             self.write(_encode.encode_ultrasonic())
-            new_vals: dict = {key: _cm_to_inch(val) for key, val in decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX, RETRIES)).items()}
+            new_vals: dict = {key: _cm_to_inch(val) for key, val in decode_ultrasonics(wait_for_reply(self, _config.ULTR_PREFIX, READ_RETRIES)).items()}
             for sensor_id, sensor_val in new_vals.items():
                 if sensor_id not in readings:
                     readings[sensor_id] = []
