@@ -2,7 +2,7 @@
 #include <VL53L0X.h>
 
 
-#define ComputerSerial Serial  // Change to Serial for computer control; Serial3 for bluetooth control;
+#define ComputerSerial Serial3  // Change to Serial for computer control; Serial3 for bluetooth control;
 
 
 
@@ -24,6 +24,8 @@
 
 #define F_TRIG 31
 #define F_ECHO A8
+#define R_TRIG 39
+#define R_ECHO A12
 #define B_TRIG 37
 #define B_ECHO A11
 #define LB_TRIG 35
@@ -36,14 +38,15 @@
 // #define GRIP_SET 46
 
 
-#define TOF_FL 0x30
+#define TOF_FL 0x40
 #define TOF_FL_X 51
-#define TOF_BL 0x31
+#define TOF_BL 0x41
 #define TOF_BL_X 50
-#define TOF_R  0x32
+#define TOF_R  0x42
 #define TOF_R_X  48
 
-#define TOF_TIMEOUT 50
+#define TOF_TIMEOUT 500
+#define TOF_CONTINUOUS
 
 // === ULTRAONIC CONFIG.... ===
 #define US_DELAY     10
@@ -103,8 +106,8 @@ unsigned long motor_L_end = 0;
 unsigned long motor_R_stopped = 0;
 unsigned long motor_L_stopped = 0;
 
-unsigned int time[4];
-int distance[4];
+unsigned int time[5];
+int distance[5];
 
 
 
@@ -198,6 +201,10 @@ void scan_i2c_devices() {
 char set_i2c_addr( int old_addr, int new_addr, int xshut_pin ) {
   pinMode(xshut_pin, OUTPUT);
 
+  digitalWrite( xshut_pin, LOW );
+  delay(20);
+  digitalWrite( xshut_pin, HIGH);
+  delay(10);
   Wire.beginTransmission( old_addr );
   Wire.write( 0x8A );
   Wire.write( new_addr );
@@ -205,11 +212,9 @@ char set_i2c_addr( int old_addr, int new_addr, int xshut_pin ) {
 
   delay(10);
 
-  digitalWrite( xshut_pin, LOW );
-  delay(10);
-  digitalWrite( xshut_pin, HIGH );
+  // digitalWrite( xshut_pin, HIGH );
 
-  pinMode(xshut_pin, OUTPUT);
+  pinMode(xshut_pin, INPUT);
 }
 
 
@@ -360,62 +365,6 @@ int is_completed() {
 
 
 /* =================
-   GRIPPERS 
-   ================= */
-// void set_gripper( int open ) {
-//   if ( open )
-//     analogWrite( GRIP_SET, GRIP_OPEN );
-//   else
-//     analogWrite( GRIP_SET, GRIP_CLOSED );
-// }
-
-// void set_arm( int up_state ) {
-//   if ( up_state )
-//     analogWrite( ARM_SET, ARM_UP );
-//   else
-//     analogWrite( ARM_SET, ARM_DOWN);
-//   if ( up_state ) 
-//     ComputerSerial.println("Setting arm UP!");
-//   else
-//     ComputerSerial.println("Setting arm DOWN!");
-// }
-
-// void gripper_receive_command() {
-//   char motion = blocking_peek();
-//     switch ( motion ) {
-//       case 'U': { /* UP */
-//         set_arm(1);
-//         break;
-//       }
-
-//       case 'D' : { /* DOWN */
-//         set_arm(0);
-//         break;
-//       }
-
-//       case 'O' : { /* OPEN */
-//         set_gripper(1);
-//         break;
-//       }
-
-//       case 'C' : { /*CLOSED */
-//         set_gripper(0);
-//         break;
-//       }
-
-//       default : {
-//         /* Return without ACK */
-//         return;
-//       }
-//     }
-//     // Remove byte from buffer, send ACK
-//     motion = ComputerSerial.read();
-//     ComputerSerial.println(GRIP_ACK);
-// }
-
-
-
-/* =================
    ULTRASONICS 
    ================= */
 unsigned int SensorPulseDuration(int trigPin, int echoPin) {
@@ -432,11 +381,12 @@ unsigned int SensorPulseDuration(int trigPin, int echoPin) {
 void sense() {
   time[0] = SensorPulseDuration(F_TRIG, F_ECHO);
   delay(US_DELAY);
-  time[2] = SensorPulseDuration(LB_TRIG, LB_ECHO);
+  time[3] = SensorPulseDuration(LB_TRIG, LB_ECHO);
   delay(US_DELAY);
-  time[3] = SensorPulseDuration(LF_TRIG, LF_ECHO);
+  time[1] = SensorPulseDuration(R_TRIG,  R_ECHO);
+  time[4] = SensorPulseDuration(LF_TRIG, LF_ECHO);
   delay(US_DELAY);
-  time[1] = SensorPulseDuration(B_TRIG, B_ECHO);
+  time[2] = SensorPulseDuration(B_TRIG, B_ECHO);
   delay(US_DELAY);
 }
 
@@ -445,6 +395,7 @@ void compute_distances() {
   distance[1] = time[1] * TIME_TO_DIST;
   distance[2] = time[2] * TIME_TO_DIST;
   distance[3] = time[3] * TIME_TO_DIST;
+  distance[4] = time[4] * TIME_TO_DIST;
 }
 
 void send_ultrasonics() {
@@ -460,7 +411,10 @@ void send_ultrasonics() {
   ComputerSerial.print(";2_");
   ComputerSerial.print(distance[2]);
   ComputerSerial.print(";3_");
-  ComputerSerial.println(distance[3]);
+  ComputerSerial.print(distance[3]);
+  ComputerSerial.print(";4_");
+  ComputerSerial.print(distance[4]);
+  ComputerSerial.println();
 }
 
 
@@ -468,13 +422,53 @@ void send_ultrasonics() {
 /* =================
    TIME OF FLIGHT 
    ================= */
+void setup_time_of_flight( VL53L0X sensor, int x_shut_pin, int addr ) {
+  digitalWrite(x_shut_pin, HIGH);
+  delay(10);
+  if ( !sensor.init() ) {
+    set_led( 255, 0, 0 );
+  }
+
+  sensor.setAddress(addr);
+  delay(10);
+  pinMode(x_shut_pin, INPUT);
+  delay(10);
+  #ifdef TOF_CONTINUOUS
+    sensor.startContinuous();
+  #else
+    sensor.setTimeout(TOF_TIMEOUT);
+  #endif
+}
+
+
+
+uint16_t get_time_of_flight( VL53L0X sensor ) {
+  #ifdef TOF_CONTINUOUS
+    return sensor.readRangeContinuousMillimeters();
+  #else
+    return sensor.readRangeSingleMillimeters();
+  #endif
+}
+
+
+
+void print_time_of_flight( uint16_t reading ) {
+  if ( reading == 65535 )
+    ComputerSerial.print("TIMEOUT");
+  else
+    ComputerSerial.print(reading);
+}
+
+
+
 void print_time_of_flight() {
-  Serial.print("T_R_");
-  Serial.print(sensor_R.readRangeSingleMillimeters());
-  Serial.print(";BL_");
-  Serial.print(sensor_BL.readRangeSingleMillimeters());
-  Serial.print(";FL_");
-  Serial.println(sensor_FL.readRangeSingleMillimeters());
+  ComputerSerial.print("T_R_");
+  print_time_of_flight(get_time_of_flight(sensor_R));
+  ComputerSerial.print(";BL_");
+  print_time_of_flight(get_time_of_flight(sensor_BL));
+  ComputerSerial.print(";FL_");
+  print_time_of_flight(get_time_of_flight(sensor_FL));
+  ComputerSerial.println();
 }
 
 
@@ -622,29 +616,50 @@ void setup() {
   delay(100);
   Serial.begin(9600);
 
+  pinMode(LED_R, OUTPUT);    pinMode(LED_G, OUTPUT);    pinMode(LED_B, OUTPUT);
+
+  // LED to indicate SETUP started...
+  set_led(120, 180, 20);
+
   // sensor_right.init();
   // sensor_right.setAddress(0x29);
 
   pinMode(IN_L_1, OUTPUT);   pinMode(IN_L_2, OUTPUT);   pinMode(EN_L, OUTPUT);
   pinMode(IN_R_1, OUTPUT);   pinMode(IN_R_2, OUTPUT);   pinMode(EN_R, OUTPUT);
 
-  pinMode(LED_R, OUTPUT);    pinMode(LED_G, OUTPUT);    pinMode(LED_B, OUTPUT);
-
   pinMode(F_TRIG,  OUTPUT);  pinMode(F_ECHO,  INPUT);
+  pinMode(R_TRIG,  OUTPUT);  pinMode(R_ECHO,  INPUT);
   pinMode(B_TRIG,  OUTPUT);  pinMode(B_ECHO,  INPUT);
   pinMode(LF_TRIG, OUTPUT);  pinMode(LF_ECHO, INPUT);
   pinMode(LB_TRIG, OUTPUT);  pinMode(LB_ECHO, INPUT);
   // pinMode(GRIP_SET, OUTPUT); pinMode(ARM_SET,  OUTPUT);
   
+  Serial.println("SETUP...");
+
   delay(100);
 
-  set_i2c_addr( 0x29, TOF_R,  TOF_R_X  );
-  set_i2c_addr( 0x29, TOF_BL, TOF_BL_X );
-  set_i2c_addr( 0x29, TOF_FL, TOF_FL_X );
 
-  sensor_R.init();  sensor_R.setAddress(TOF_R);   sensor_R.setTimeout(TOF_TIMEOUT);
-  sensor_BL.init(); sensor_BL.setAddress(TOF_BL); sensor_BL.setTimeout(TOF_TIMEOUT);
-  sensor_FL.init(); sensor_FL.setAddress(TOF_FL); sensor_FL.setTimeout(TOF_TIMEOUT);
+  #ifdef TOF_CONTINUOUS
+    pinMode(TOF_R_X, OUTPUT);  digitalWrite(TOF_R_X, LOW);
+    pinMode(TOF_BL_X, OUTPUT); digitalWrite(TOF_BL_X, LOW);
+    pinMode(TOF_FL_X, OUTPUT); digitalWrite(TOF_FL_X, LOW);
+    setup_time_of_flight( sensor_R, TOF_R_X, TOF_R );
+    setup_time_of_flight( sensor_BL, TOF_BL_X, TOF_BL );
+    setup_time_of_flight( sensor_FL, TOF_FL_X, TOF_FL );
+  #else
+    set_i2c_addr( 0x29, TOF_R,  TOF_R_X  );
+    set_i2c_addr( 0x29, TOF_BL, TOF_BL_X );
+    set_i2c_addr( 0x29, TOF_FL, TOF_FL_X );
+
+    sensor_R.init();  sensor_R.setAddress(TOF_R);   sensor_R.setTimeout(TOF_TIMEOUT);
+    sensor_BL.init(); sensor_BL.setAddress(TOF_BL); sensor_BL.setTimeout(TOF_TIMEOUT);
+    sensor_FL.init(); sensor_FL.setAddress(TOF_FL); sensor_FL.setTimeout(TOF_TIMEOUT);
+  #endif
+
+  Serial.println("SETUP END...");
+
+  // LED to indicate SETUP ended...
+  set_led(0, 120, 120);
 }
 
 
