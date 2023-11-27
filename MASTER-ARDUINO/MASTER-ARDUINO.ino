@@ -403,18 +403,23 @@ void send_ultrasonics() {
 
   compute_distances();
 
-  ComputerSerial.print("U_");
-  ComputerSerial.print("0_");
-  ComputerSerial.print(distance[0]);
-  ComputerSerial.print(";1_");
-  ComputerSerial.print(distance[1]);
-  ComputerSerial.print(";2_");
-  ComputerSerial.print(distance[2]);
-  ComputerSerial.print(";3_");
-  ComputerSerial.print(distance[3]);
-  ComputerSerial.print(";4_");
-  ComputerSerial.print(distance[4]);
-  ComputerSerial.println();
+  char buffer[256];
+
+  sprintf(buffer, "U_0_%d;1_%d;2_%d;3_%d;4_%d", distance[0], distance[1], distance[2], distance[3], distance[4]);
+
+  ComputerSerial.println(buffer);
+
+  // ComputerSerial.print("U_");
+  // ComputerSerial.print("0_");
+  // ComputerSerial.print(distance[0]);
+  // ComputerSerial.print(";1_");
+  // ComputerSerial.print(distance[1]);
+  // ComputerSerial.print(";2_");
+  // ComputerSerial.print(distance[2]);
+  // ComputerSerial.print(";3_");
+  // ComputerSerial.print(distance[3]);
+  // ComputerSerial.print(";4_");
+  // ComputerSerial.println(distance[4]);
 }
 
 
