@@ -10,38 +10,22 @@ outline:
   - [-4, -1.24]
 
 ultrasonic:
-  FL:
-    location: [-1.6, -2.7] # -2.7
+  F:
+    location: [0, -3.2] # -2.7
     rotation: 180
-    xoffset:  15
-    yoffset:  -10
-
-  FR:
-    location: [1.6,  -2.7] # 2.7
-    rotation: 180
-    xoffset:  -15
-    yoffset:  -10
-
-  LF:
-    location: [-3.7, -1.2]
-    rotation: 270
-    xoffset:  20
-    yoffset:  10
-
-  LB:
-    location: [-3.7, 1.4]
-    rotation: 315
-    xoffset:  20
-    yoffset:  10
-
-  B:
-    location: [0, 2.7]
-    rotation: 0
-    xoffset:  20
-    yoffset:  10
 
   R:
-    location: [3.7, 0]
+    location: [3.5, 0]
     rotation: 90
-    xoffset:  -20
-    yoffset: 20
+
+  FL:
+    location: [-2.6, -2]
+    rotation: 270
+
+  BL:
+    location: [-2.6, 2]
+    rotation: 315
+
+  B:
+    location: [0, 3.2]
+    rotation: 0

@@ -11,7 +11,7 @@ import sys, os; sys.path.append(os.path.dirname(os.path.dirname(__file__))) ## E
 
 import connector._config as _config
 
-_ = sys.path.pop() ## Cleanup local modules
+# _ = sys.path.pop() ## Cleanup local modules
 
 
 ##########################
