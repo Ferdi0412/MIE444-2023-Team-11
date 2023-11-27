@@ -21,6 +21,7 @@ CLASSES:
 import serial as _serial
 
 
+
 ########################
 ### CUSTOM LIBRARIES ###
 ########################
@@ -28,10 +29,10 @@ import sys, os; sys.path.append(os.path.dirname(os.path.dirname(__file__))) ## E
 
 import connector._config  as _config
 import connector._encode  as _encode
-from connector._request import NoAcknowledge, NoReply, wait_for_acknowledge, wait_for_reply, wait_for_replies
+from connector._request import wait_for_acknowledge, wait_for_reply, wait_for_replies, NoAcknowledge, NoReply
 from connector._decode  import decode_progress, decode_ultrasonics
 
-_ = sys.path.pop() ## Cleanup local modules
+# _ = sys.path.pop() ## Cleanup local modules
 
 
 
@@ -39,6 +40,7 @@ _ = sys.path.pop() ## Cleanup local modules
 ### CONFIG ###
 ##############
 READ_RETRIES  = 5
+WRITE_RETRIES = 2
 WRITE_TIMEOUT = 3 # seconds
 
 CommErrors = (NoAcknowledge, NoReply)
@@ -52,8 +54,23 @@ def _ultrasonic_lookup(readings: dict) -> dict:
     """Translate "Arduino" names to colloquial names."""
     return dict([_config.ULTR_LOOKUP.get(sensor_id, sensor_id), val] for sensor_id, val in readings.items())
 
+
+
 def _cm_to_inch(val: float) -> float:
     return 0.393701 * val
+
+
+
+def _write_retry(write_method):
+    def _retry(*args, **kwargs):
+        for _ in range( WRITE_RETRIES ):
+            try:
+                return write_method(*args, **kwargs)
+            except CommErrors:
+                continue
+    return _retry
+
+
 
 ############
 ### MAIN ###
@@ -112,7 +129,7 @@ class Team_11_Robot:
 
 
 
-    def move_forward(self, distance: float = None) -> None:
+    @_write_retry
     def move_forward(self, distance: float ) -> None:
         """Move forward by {distance} inches."""
         print(distance)
@@ -125,6 +142,7 @@ class Team_11_Robot:
 
 
 
+    @_write_retry
     def rotate(self, angle: float = None) -> None:
         """Rotate clockwise by {angle} degrees."""
         if angle > 0:
@@ -136,6 +154,7 @@ class Team_11_Robot:
 
 
 
+    @_write_retry
     def stop(self) -> None:
         """Stop motors."""
         self.write(_encode.encode_stop())
@@ -143,6 +162,7 @@ class Team_11_Robot:
 
 
 
+    @_write_retry
     def is_active(self) -> bool:
         """Check if motor is in active motion."""
         self.write(_encode.encode_active())
@@ -154,6 +174,7 @@ class Team_11_Robot:
 
 
 
+    @_write_retry
     def progress(self) -> float:
         """Return percentage progress along last move."""
         self.write(_encode.encode_progress())
@@ -162,6 +183,7 @@ class Team_11_Robot:
 
 
 
+    @_write_retry
     def led(self, r: int, g: int, b: int) -> None:
         """Set LED to R={r}; G={g}; B={b} colors."""
         self.write(_encode.encode_led(r, g, b))
@@ -169,6 +191,7 @@ class Team_11_Robot:
 
 
 
+    @_write_retry
     def led_off(self) -> None:
         """Turn LED off."""
         self.write(_encode.encode_led(0, 0, 0))
@@ -176,6 +199,7 @@ class Team_11_Robot:
 
 
 
+    @_write_retry
     def ultrasonics(self) -> dict[str, float]:
         """Request a dictionary of ULTRASONIC sensor readings."""
         self.write(_encode.encode_ultrasonic())
@@ -183,6 +207,7 @@ class Team_11_Robot:
 
 
 
+    @_write_retry
     def ultrasonic_json(self, number_of_attempts: int) -> dict[str, list[float]]:
         """Request a dictionary of lists of length {number_of_attempts} ULTRASONIC readings."""
         readings = {}
