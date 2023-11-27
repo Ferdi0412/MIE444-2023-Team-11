@@ -9,7 +9,7 @@ Automation of robot, to be implemented.
 Serial control of robot. Setup works well with Windows, should work with Apple (just the serial com port is different syntactically).
 
 ```bash
-pip install pyserial
+pip install pyserial pyyaml
 ```
 
 ```python
@@ -42,7 +42,7 @@ Localization and navigation of maze.
 - pathfinding (setup for localizing)
 
 ```bash
-pip install install numpy scipy matplotlib networkx
+pip install pygame numpy scipy matplotlib networkx
 ```
 
 ```python
@@ -78,3 +78,7 @@ for i, (row, col) in enumerate(pathfinding.get_shortest_path((0, 0), (3, 7))):
 
 ## /user_interface
 Graphic display and user inputs for robot.
+
+```bash
+pip install pandas
+```
