@@ -118,6 +118,10 @@ class UltrasonicSensor:
         """Append a reading to the buffer."""
         self._buffer.appendleft(value)
 
+    def extend(self, value: list[float]) -> None:
+        """Extend readings to the buffer."""
+        self._buffer.extendleft(value)
+
     def mean(self) -> float:
         """Return mean of sensor readings in buffer."""
         return _numpy.mean(self._buffer)
