@@ -58,7 +58,7 @@ BLOCK_LEN          = 12
 
 
 ## == COMMUNICATION ==
-COM_PORT       = "COM13"
+COM_PORT       = "COM12"
 SERIAL_RETRIES = 5
 
 
@@ -242,7 +242,7 @@ def get_directional_readings(number_of_readings: int = 1) -> tuple[float, float,
     left  = ( readings['FL'] + readings['BL'] ) / 2
     back  = readings['B']
     right = ( readings['FR'] + readings['BR'] ) / 2
-    return fwd, left, back, right
+    return fwd, right, back, left
 
 
 
@@ -431,7 +431,7 @@ def localize_global() -> None:
 
     ## Check if PROBABILITIES has yet been generated.
     if PROBABILITIES is not None:
-        PROBABILITIES = histogram.apply_movement_filter_unknown_direction(PROBABILITIES, movements_fwd, None, rotations_clockwise)
+        PROBABILITIES = histogram.apply_movement_filter_unknown_direction(PROBABILITIES, movements_fwd, 0, rotations_clockwise)
 
     ## Generate probabilities given position
     PROBABILITIES = histogram.determine_probabilities_unknown_direction(PROBABILITIES, *get_directional_readings(10))
@@ -737,7 +737,7 @@ def drop_block():
 if __name__ == '__main__':
     wait_for_comms()
 
-    blink_led(*LedColours.startup, 5)
+    # blink_led(*LedColours.startup, 5)
 
     while True:
         display.draw()

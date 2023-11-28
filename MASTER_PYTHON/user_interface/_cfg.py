@@ -20,8 +20,8 @@ def get_robot_config() -> dict:
 ##########################
 ### GEN. SCREEN CONFIG ###
 ##########################
-SCREEN_WIDTH  = 1800
-SCREEN_HEIGHT = 1200
+SCREEN_WIDTH  = 1200
+SCREEN_HEIGHT = 800
 
 PIXEL_SCALE   = 20 ## This means that 8 pixels represents 1 inch...
 
