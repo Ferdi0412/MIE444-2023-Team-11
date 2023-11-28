@@ -498,9 +498,32 @@ def path_to_location():
         path = pathfind.get_shortest_path(CURRENT_POSITION, (row, col))
         pathfind.draw(path)
         input("[ENTER] to continue...")
+        pathfind.close_plt()
 
 
 
+
+def manual_path():
+    print("CURRENT POSITION:")
+    curr_row, curr_col = take_x_y_inputs()
+
+    if curr_row is None or curr_col is None:
+        print("INVALID...")
+        return
+
+    to_row, to_col = take_x_y_inputs()
+
+    if to_row is None or to_col is None:
+        print("INVALID...")
+        return
+
+    path = pathfind.get_shortest_path((curr_row, curr_col), (to_row, to_col))
+    pathfind.draw(path)
+    input("[ENTER] to continue...")
+    pathfind.close_plt()
+
+
+display.RobotController.manual_path          = manual_path
 display.RobotController.path_to_loading_zone = path_to_loading_zone
 display.RobotController.path_to_location     = path_to_location
 

@@ -90,6 +90,10 @@ class RobotController:
     def path_to_location():
         raise NotSetup
 
+    @staticmethod
+    def manual_path():
+        raise NotSetup
+
 
 
 ## TODO: Find some implementation for this
@@ -165,6 +169,9 @@ def handle_input():
 
             elif event.key == pygame.K_m:
                 RobotController.path_to_location()
+
+            elif event.key == pygame.K_b:
+                RobotController.manual_path()
 
         elif manual_mode and event.type == pygame.KEYUP and event.key in (pygame.K_w, pygame.K_s, pygame.K_q, pygame.K_e):
             RobotController.stop()
