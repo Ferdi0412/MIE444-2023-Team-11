@@ -79,6 +79,7 @@ def get_ultrasonics():
     global LATEST_ULTRASONICS
     readings = robot.ultrasonics()
     display.register_ultrasonic(readings)
+    display.draw()
     LATEST_ULTRASONICS = readings
     return readings
 
@@ -101,18 +102,6 @@ def move(distance_fwd: float):
     robot.move_forward(distance_fwd)
     while robot.is_active():
         pass_time(0.05)
-
-
-
-## Not a good approach
-# def move_safe(distance_fwd: float):
-#     """Same as move, but checks that front sensor reading is changing over duration."""
-#     initial_reading = get_ultrasonics()['F']
-#     move(distance_fwd)
-#     final_reading   = get_ultrasonics()['F']
-#     delta_reading = initial_reading - final_reading
-#     if delta_reading > ((1+MOVE_FORWARD_ERR) * distance_fwd) or delta_reading < ((1-MOVE_FORWARD_ERR) * distance_fwd):
-#         raise Stuck(f"Expected to move {distance_fwd}, only moved {delta_reading}. {(1 - delta_reading / distance_fwd) * 100:.2f}% ERR.")
 
 
 
@@ -339,13 +328,21 @@ def wall_align(increments: int = 36):
     print(f"LEFT: {left}\nRIGHT: {right}\nL: {target_l}\nR: {target_r}")
 
     if target_l < target_r:
-        steps = numpy.where(left == target_l)[0][0]
+        print(f"Aiming for {target_l}")
+        idx = numpy.where(left == target_l)[0][-1]
         left_aligned = True
     else:
-        steps = numpy.where(right == target_r)[0][0]
+        print(f"Aiming for {target_r}")
+        idx = numpy.where(right == target_r)[0][-1]
         left_aligned = False
 
-    for _ in range(steps):
+    print(f"Rotating {(increments - idx) * (180 // increments)} degrees")
+    print(f"Increments: {increments}")
+    print(f"IDX: {idx}")
+
+    input("[ENTER] to align")
+
+    for _ in range(increments - idx):
         rotate( - 180 // increments )
 
     return left_aligned
@@ -396,6 +393,33 @@ def wait_for_start():
             pass
 
 
+def startup(display_positions = True):
+    ## Try to localize:
+    wait_for_start()
+
+    wall_align()
+
+    rotate_to_opening(scan_directions())
+
+    if left_parallel():
+        left_align()
+    elif right_parallel():
+        right_align()
+    else:
+        raise Exception("Unable to parallelize...")
+
+    _localized = False
+    probs = None
+
+    while not _localized:
+        probs = histogram.determine_probabilities_unknown_direction(probs, *scan_directions())
+
+        if display_positions:
+            for i, p in enumerate(probs):
+                if histogram.is_valid_prob(p):
+                    histogram.draw(p, title=histogram.DIRECTIONS[i])
+                    input("[ENTER] to continue...")
+
 ############
 ### MAIN ###
 ############
@@ -415,8 +439,6 @@ elif right_parallel:
 else:
     raise Exception
 
-exit()
-
 probs = histogram.determine_probabilities_unknown_direction(None, *scan_directions())
 for p in probs:
     # print(p)
@@ -433,7 +455,13 @@ if right_parallel():
 else:
     raise Exception("Could not find a parallel wall!")
 
+probs = histogram.apply_movement_filter_unknown_direction(probs, 12, 0)
 
+probs = histogram.determine_probabilities_unknown_direction(probs, *scan_directions())
+for p in probs:
+    # print(p)
+    histogram.draw(p)
+    input("[ENTER] to continue...")
 
 # robot.move_forward(1)
 
