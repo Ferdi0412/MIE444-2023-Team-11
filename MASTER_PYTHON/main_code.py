@@ -58,7 +58,7 @@ BLOCK_LEN          = 12
 
 
 ## == COMMUNICATION ==
-COM_PORT       = "COM12"
+COM_PORT       = "COM13"
 SERIAL_RETRIES = 5
 
 
@@ -104,6 +104,11 @@ display.init()
 ## == LOCALIZATION ==
 print("[histogram] is getting set up")
 histogram.setup()
+
+
+## == NAVIGATING ==
+print("[pathfind] is getting set up")
+pathfind.setup()
 
 
 print("SETUP COMPLETE!", end='\n\n')
@@ -472,14 +477,14 @@ def path_to_loading_zone():
 
 
 
-def take_x_y_inputs():
+def take_x_y_inputs(prefix: str = ''):
     try:
-        y = int(input("\n\n[ENTER] ROW:\n"))
+        y = int(input(f"\n\n[ENTER] {prefix} ROW:\n"))
     except ValueError:
         print("An error in taking inputs occured...")
         return None, None# take_x_r_inputes()
     try:
-        x = int(input("\n\n[ENTER] COL:\n"))
+        x = int(input(f"\n\n[ENTER] {prefix} COL:\n"))
     except ValueError:
         print("An error in taking inputs occured...")
         return None, None# take_x_r_inputes()
@@ -504,14 +509,13 @@ def path_to_location():
 
 
 def manual_path():
-    print("CURRENT POSITION:")
-    curr_row, curr_col = take_x_y_inputs()
+    curr_row, curr_col = take_x_y_inputs("current")
 
     if curr_row is None or curr_col is None:
         print("INVALID...")
         return
 
-    to_row, to_col = take_x_y_inputs()
+    to_row, to_col = take_x_y_inputs("target")
 
     if to_row is None or to_col is None:
         print("INVALID...")
