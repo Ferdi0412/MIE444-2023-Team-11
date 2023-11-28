@@ -83,8 +83,8 @@ def _generate_maze(resolution, distance_threshold):
                 maze[row-1, col-1] = tuple([-1, -1, -1, -1,])
                 continue
 
-            east  = min( _np.argmax( WALLS[row, col-1 :: -1] ), distance_threshold )
-            west  = min( _np.argmax( WALLS[row, col+1 :    ] ), distance_threshold )
+            west  = min( _np.argmax( WALLS[row, col-1 :: -1] ), distance_threshold )
+            east  = min( _np.argmax( WALLS[row, col+1 :    ] ), distance_threshold )
             north = min( _np.argmax( WALLS[row-1 :: -1, col] ), distance_threshold )
             south = min( _np.argmax( WALLS[row+1 :,     col] ), distance_threshold )
 

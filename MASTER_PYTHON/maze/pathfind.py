@@ -2,6 +2,7 @@
 ### BASE MODULES ###
 ####################
 import networkx as _nx
+import numpy    as _np
 import matplotlib.pyplot as _plt
 import sys
 import os
@@ -64,12 +65,33 @@ def get_shortest_path(start: tuple[int, int], end: tuple[int, int]) -> list[tupl
 
 
 
+def draw(path: list[tuple[int, int]], current_pos: tuple[int, int] = None):
+    maze = _np.zeros(OPEN.shape)
+    for i, idx in enumerate(path):
+        maze[*idx] = 1 if (i != 0 and i != len(path)-1) else 0.5
+    if current_pos:
+        maze[current_pos] = 1.5
+    _plt.close()
+    _plt.matshow(maze)
+    _plt.draw()
+    _plt.pause(0.001)
+
+
+
+def close_plt():
+    _plt.close()
+
+
+
 ############
 ### TEST ###
 ############
 if __name__ == '__main__':
     _generate_graph()
-    print(get_shortest_path((0, 0), (3, 7)))
+
+    path = get_shortest_path((0, 0), (3, 7))
+
+    draw(path, (1, 3))
 
     input("[ENTER] to exit...")
 

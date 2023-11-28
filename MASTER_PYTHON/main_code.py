@@ -246,6 +246,13 @@ def get_directional_readings(number_of_readings: int = 1) -> tuple[float, float,
 
 
 
+def get_open_direction(number_of_readings: int = 1) -> int:
+    """Returns number of clockwise 90 degree rotations to come to next open space."""
+    readings = numpy.array(get_directional_readings())
+    return numpy.where(readings > 12)[0][0]
+
+
+
 ###################
 ### ALIGN CODES ###
 ###################
@@ -291,6 +298,8 @@ def nate_align():
     if diag_align:
         print("Rotating 45 degrees")
         rotate(45)
+        degrees_rotated += 45
+    return degrees_rotated
 
 
 
@@ -394,6 +403,107 @@ CURRENT_ORIENTATION = None
 PROBABILITIES       = None
 
 
+def take_x_r_inputs():
+    try:
+        x = int(input("\n\n[ENTER] Number of blocks moved forward (-ve for negative):\n"))
+    except ValueError:
+        print("An error in taking inputs occured...")
+        return None, None# take_x_r_inputes()
+    try:
+        r = int(input("\n\n[ENTER] Number of 90 degree rotations clockwise (key_'e' direction; -ve for counter-clockwise):\n"))
+    except ValueError:
+        print("An error in taking inputs occured...")
+        return None, None# take_x_r_inputes()
+    print("Done taking inputs...")
+    return x, r
+
+
+
+def localize_global() -> None:
+    global PROBABILITIES, CURRENT_ORIENTATION, CURRENT_POSITION
+
+    ## Get user inputs
+    movements_fwd, rotations_clockwise = take_x_r_inputs()
+
+    ## Check inputs are valid
+    if movements_fwd is None or rotations_clockwise is None:
+        return ## Do nothing if invalid inputs
+
+    ## Check if PROBABILITIES has yet been generated.
+    if PROBABILITIES is not None:
+        PROBABILITIES = histogram.apply_movement_filter_unknown_direction(PROBABILITIES, movements_fwd, None, rotations_clockwise)
+
+    ## Generate probabilities given position
+    PROBABILITIES = histogram.determine_probabilities_unknown_direction(PROBABILITIES, *get_directional_readings(10))
+
+    ## Display plots
+    histogram.draw_set(PROBABILITIES)
+    histogram.draw_clear()
+
+    ## See if a single valid direction has been found...
+    if histogram.determine_direction(PROBABILITIES):
+        print("\n\n!!!HURRAY!!!\n\nYOU HAVE LOCALIZED.")
+        CURRENT_ORIENTATION = histogram.determine_direction(PROBABILITIES)
+        CURRENT_POSITION = histogram.get_locations(PROBABILITIES[CURRENT_ORIENTATION])
+
+
+
+def localize_oneoff() -> None:
+    ## Display "one-off" localization
+    histogram.draw_set(histogram.determine_probabilities_unknown_direction(None, *get_directional_readings(10)))
+    histogram.draw_clear()
+
+
+
+display.RobotController.localize_global = localize_global
+display.RobotController.localize_oneoff = localize_oneoff
+
+
+
+def path_to_loading_zone():
+    if CURRENT_POSITION is not None:
+        print("Displaying path to LOADING ZONE")
+        path_1 = pathfind.get_shortest_path(CURRENT_POSITION, (1, 3))
+        path_2 = pathfind.get_shortest_path(CURRENT_POSITION, (3, 1))
+        pathfind.draw(path_1 if (len(path_1) <= len(path_2)) else path_2)
+        input("[ENTER] to continue...")
+    else:
+        print("Not yet localized...")
+
+
+
+def take_x_y_inputs():
+    try:
+        y = int(input("\n\n[ENTER] ROW:\n"))
+    except ValueError:
+        print("An error in taking inputs occured...")
+        return None, None# take_x_r_inputes()
+    try:
+        x = int(input("\n\n[ENTER] COL:\n"))
+    except ValueError:
+        print("An error in taking inputs occured...")
+        return None, None# take_x_r_inputes()
+    print("Done taking inputs...")
+    return y, x
+
+
+
+def path_to_location():
+    if CURRENT_POSITION is None:
+        print("Not yet localized...")
+        return
+    row, col = take_x_y_inputs()
+    if row is not None and col is not None:
+        print(f"Displaying shjortet path to ({row}, {col})")
+        path = pathfind.get_shortest_path(CURRENT_POSITION, (row, col))
+        pathfind.draw(path)
+        input("[ENTER] to continue...")
+
+
+
+display.RobotController.path_to_loading_zone = path_to_loading_zone
+display.RobotController.path_to_location     = path_to_location
+
 
 def wait_for_comms():
     while True:
@@ -410,6 +520,21 @@ def setup_position():
     ## Align with walls
     nate_align()
 
+    print("First nate_align done!")
+
+    dist_fwd, dist_right = center_distance()
+
+    while dist_fwd == 0:
+        move_forward(0.1)
+        dist_fwd, dist_right = center_distance()
+
+    alpha = math.degrees( math.atan( dist_right / dist_fwd ) )
+
+    rotate(-alpha - ANGLE_THRESHOLD / 2)
+
+    print(f"Distances from center of block: {(dist_fwd, dist_right)}")
+    move_forward( - dist_fwd )
+
     ## TODO:
     ## - Add some way to handle centering
 
@@ -418,15 +543,19 @@ def setup_position():
         readings = get_ultrasonics_json(5)
 
         if readings['F'] < readings['B'] and readings['F'] != 0:
+            print("First case...")
             move_forward(readings['F'] - 3)
 
         elif readings['B'] != 0:
+            print("Second case...")
             move_forward( - readings['B'] + 3)
 
         elif readings['F'] != 0:
-            move_forward( readings['F'] )
+            print("Third case...")
+            move_forward( readings['F'] - 3 )
 
         else:
+            print("Re-aligning...")
             nate_align()
             continue
 
@@ -435,6 +564,8 @@ def setup_position():
 
 
 def localize(position_setup: bool = False):
+    print("\n\nStarting localize...")
+
     global CURRENT_POSITION, CURRENT_ORIENTATION, PROBABILITIES
     localized = False
     if not position_setup:
@@ -463,7 +594,34 @@ def localize(position_setup: bool = False):
             input("Press [ENTER] to continue!")
             return
 
-        move_forward(12)
+        ## Calculate how many rotations need to be made to get to next open space
+        rotations_to_make = get_open_direction(5)
+        print(f"Rotating {rotations_to_make * 90} degrees...")
+
+        ## Update probs to represent this rotation
+        probs = histogram.rotate_90(*probs, rotations_to_make)
+        ## Rotate robot to match this
+        rotate( rotations_to_make * 90 )
+
+        print(f"Moving forward 12 inches...")
+        for _ in range( 4 ):
+            if check_right_parallel():
+                print("LEFT aligned...")
+                align_left_parallel()
+                move_right_parallel( 3 )
+
+            elif check_left_parallel():
+                print("RIGHT aligned...")
+                align_right_parallel()
+                move_left_parallel( 3 )
+
+            else:
+                print("NO alignment")
+                ## Pray it moves forwards
+                # nate_align()
+                move_forward( 3 )
+            # nate_align()
+            # move_forward(3)
 
         probs = histogram.apply_movement_filter_unknown_direction(probs, 12, 0)
         probs = histogram.determine_probabilities_unknown_direction(probs, *get_directional_readings())
@@ -581,10 +739,14 @@ if __name__ == '__main__':
 
     blink_led(*LedColours.startup, 5)
 
+    while True:
+        display.draw()
+        get_ultrasonics()
+
     # setup_position()
 
-    localize( True )
+    # localize( True )
 
-    exit()
+    # exit()
 
-    navigate_to_loading_zone()
+    # navigate_to_loading_zone()

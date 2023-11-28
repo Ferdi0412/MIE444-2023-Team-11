@@ -74,6 +74,22 @@ class RobotController:
     def go_manual(state: bool):
         raise NotSetup
 
+    @staticmethod
+    def localize_global():
+        raise NotSetup
+
+    @staticmethod
+    def localize_oneoff():
+        raise NotSetup
+
+    @staticmethod
+    def path_to_loading_zone():
+        raise NotSetup
+
+    @staticmethod
+    def path_to_location():
+        raise NotSetup
+
 
 
 ## TODO: Find some implementation for this
@@ -135,8 +151,20 @@ def handle_input():
             elif event.key == pygame.K_s:
                 RobotController.go_fwd(-LIN_DIST)
 
+            # elif event.key == pygame.K_u:
+            #     RobotController.ultrasonic()
+
             elif event.key == pygame.K_u:
-                RobotController.ultrasonic()
+                RobotController.localize_oneoff()
+
+            elif event.key == pygame.K_6:
+                RobotController.localize_global()
+
+            elif event.key == pygame.K_n:
+                RobotController.path_to_loading_zone()
+
+            elif event.key == pygame.K_m:
+                RobotController.path_to_location()
 
         elif manual_mode and event.type == pygame.KEYUP and event.key in (pygame.K_w, pygame.K_s, pygame.K_q, pygame.K_e):
             RobotController.stop()

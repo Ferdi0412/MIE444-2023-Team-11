@@ -1,5 +1,6 @@
 import time
 import numpy
+import pandas
 import math
 
 
@@ -105,7 +106,7 @@ def get_ultrasonics_multiple(count: int, delay: float = 0) -> dict:
 def sensor_mean(sensor_readings) -> float:
     readings = numpy.array(sensor_readings)
     readings = readings[numpy.where(readings > 0)]
-    return numpy.mean(readings)
+    return numpy.mean(readings) if len(readings) > 0 else 0
 
 
 
@@ -116,6 +117,7 @@ def pass_time(sleep_s: int = 0.1):
 
 
 def rotate(angle: int):
+    print("Call to robot.rotate(...)!")
     robot.rotate(angle)
     while robot.is_active():
         pass_time(0.05)
@@ -127,6 +129,9 @@ def move(distance_fwd: float):
     while robot.is_active():
         pass_time(0.05)
 
+
+def to_df(sensor_readings: dict[str, list[float]]) -> pandas.DataFrame:
+    return pandas.DataFrame(list(sensor_readings.values()), columns=list(sensor_readings.keys()))
 
 
 ##################
@@ -310,6 +315,8 @@ def dist_from_front_wall() -> float | None:
     ## Assume front parallel
     return ( LATEST_ULTRASONICS['F'] ) + FRONT_FROM_CENTER
 
+
+
 def front_back_align(row, col, orientation):
     """Calculate optimal angle based on front and back sensors compared to expected inputs.
 
@@ -355,59 +362,55 @@ def nate_align():
                 diag_check = False
                 break
         ## Update wall_align code here...
-        if (readings['FR'] - readings['BR']) < 0.5 and (readings['F'] > 12 or readings['B'] > 12 or ((readings['FL'] + readings['BL']) / 2) > 12):
-            wall_align = True
-        elif (readings['FL'] - readings['BL']) < 0.5 and (readings['F'] > 12 or readings['B'] > 12 or ((readings['FR'] + readings['BR']) / 2) > 12):
-            wall_align = True
+        if (readings['FR'] != 0 and readings['BR'] != 0) and (readings['FR'] - readings['BR']) < 0.5 and (readings['F'] > 12 or readings['B'] > 12 or ((readings['FL'] + readings['BL']) / 2) <= 12):
+            print("Right wall appears aligned")
+            if abs(abs(left_angle()) - 45) < ANGLE_THRESHOLD:
+                diag_align = True
+            else:
+                rotate(-right_angle())
+                wall_align = True
+        elif (readings['FL'] != 0 and readings['BL'] != 0) and (readings['FL'] - readings['BL']) < 0.5 and (readings['F'] > 12 or readings['B'] > 12 or ((readings['FR'] + readings['BR']) / 2) <= 12):
+            print("Left wall appears aligned")
+            if abs(abs(right_angle()) - 45) < ANGLE_THRESHOLD:
+                diag_align = True
+            else:
+                rotate(-left_angle())
+                wall_align = True
         elif diag_check:
+            print("Diagonally aligned!")
             diag_align = True
         else:
+            print("Rotating another 15 degrees")
             rotate(15)
             degrees_rotated += 15
 
     if diag_align:
+        print("Rotating 45 degrees")
         rotate(45)
 
-def wall_align(increments: int = 36):
-    """Align with wall. Do a 180 degree rotation (or at least attempt to)."""
-    left_dist, left_alpha, right_dist, right_alpha = [], [], [], []
-
-    for _ in range(increments):
-        rotate( 180 // increments )
-        # left_alpha.append(left_angle() if left_parallel() else numpy.nan)
-        left_dist.append(dist_from_left_wall() or numpy.nan)
-        # right_alpha.append(right_angle() if right_parallel() else numpy.nan)
-        right_dist.append(dist_from_right_wall() or numpy.nan)
-
-    left  = numpy.array(left_dist)
-    right = numpy.array(right_dist)
-
-    target_l = numpy.nanmin(left)
-    target_r = numpy.nanmin(right)
-
-    print(f"LEFT: {left}\nRIGHT: {right}\nL: {target_l}\nR: {target_r}")
-
-    if target_l < target_r:
-        print(f"Aiming for {target_l}")
-        idx = numpy.where(left == target_l)[0][-1]
-        left_aligned = True
-    else:
-        print(f"Aiming for {target_r}")
-        idx = numpy.where(right == target_r)[0][-1]
-        left_aligned = False
-
-    print(f"Rotating {(increments - idx) * (180 // increments)} degrees")
-    print(f"Increments: {increments}")
-    print(f"IDX: {idx}")
-
-    input("[ENTER] to align")
-
-    for _ in range(increments - idx):
-        rotate( - 180 // increments )
-
-    return left_aligned
 
 
+def center_distance():
+    """Returns adjustment to forward and right values for next block. From Nate's earlier 'center' function.
+    Intention -> use to adjust movement to next block.
+    """
+    readings = pandas.Series(get_ultrasonics_multiple(10))
+    readings %= 12
+    readings[readings > 9.6] -= 12
+
+    r_mean = (readings['FR'] + readings['BR']) / 2
+    l_mean = (readings['FL'] + readings['BL']) / 2
+
+    fb_diff = readings['F'] - readings['B']
+    lr_diff = l_mean - r_mean
+
+    if (fb_diff > 0 and readings['F'] < 3.5) or (fb_diff  < 0 and readings['B'] < 3.5):
+        fb_diff = 0
+
+    if (lr_diff > 0 and r_mean < 2.5) or (lr_diff < 0 and l_mean < 2.5):
+        lr_diff = 0
+
+    return fb_diff, lr_diff
 
 
 
@@ -420,9 +423,13 @@ def scan_directions():
     left  = (ultrasonics['FL'] + ultrasonics['BL']) / 2
     return fwd, right, back, left
 
+
+
 def rotate_to_opening(*directions):
     open_direction = numpy.argmax(numpy.array(directions) >= 12)
     rotate( 90 * open_direction )
+
+
 
 def wall_angle(ultrasonics: dict):
     """Right-angle triangle, width is distance between sensors, height is difference in reading."""
@@ -430,11 +437,16 @@ def wall_angle(ultrasonics: dict):
     return math.degrees(math.atan( height / FR_BR ))
 
 
+
 def wall_dist(ultrasonics: dict):
     return (ultrasonics['FR'] + ultrasonics['BR']) / 2
 
+
+
 def wall_difference(ultrasonics: dict):
     return ultrasonics['FR'] - ultrasonics['BR']
+
+
 
 def turns_to_opening(fwd, right, back, left):
     """Inputs are distances, returns number of 90 degree turns"""
@@ -442,6 +454,7 @@ def turns_to_opening(fwd, right, back, left):
     if turns > 2:
         return 4 - turns
     return turns
+
 
 
 def wait_for_start():
@@ -453,23 +466,21 @@ def wait_for_start():
             pass
 
 
+
 def startup(display_positions = True):
     ## Try to localize:
     wait_for_start()
 
-    wall_align()
+    nate_align()
 
     rotate_to_opening(scan_directions())
 
-    if left_parallel():
-        left_align()
-    elif right_parallel():
-        right_align()
-    else:
-        raise Exception("Unable to parallelize...")
+    nate_align()
 
     _localized = False
-    probs = None
+    probs      = None
+
+    print("Starting localization")
 
     while not _localized:
         probs = histogram.determine_probabilities_unknown_direction(probs, *scan_directions())
@@ -480,26 +491,46 @@ def startup(display_positions = True):
                     histogram.draw(p, title=histogram.DIRECTIONS[i])
                     input("[ENTER] to continue...")
 
+        break
+
 ############
 ### MAIN ###
 ############
+
+
 wait_for_start()
 
-# raise Exception("End of code...")
-
-## TODO: Finish wall_align
 nate_align()
 
-input("[ENTER] to continue...")
+print(turns_to_opening(*scan_directions()))
 
-rotate_to_opening(scan_directions())
+# rotate_to_opening(scan_directions())
 
-if left_parallel():
-    left_align()
-elif right_parallel():
-    right_align()
-else:
-    raise Exception
+# nate_align()
+
+# fwd_offset, right_offset = center_distance()
+# print(fwd_offset, right_offset)
+# if fwd_offset != 0:
+#     alpha = math.degrees(math.atan( right_offset / fwd_offset ))
+#     rotate(-alpha)
+#     move(fwd_offset)
+
+
+# get_ultrasonics()
+# def get_angle(height, base):
+#     return math.degrees(math.atan(height / base))
+# if abs(get_angle(LATEST_ULTRASONICS['FR'] - LATEST_ULTRASONICS['BR'], FR_BR) ) < 30:
+#     right_align()
+
+#print(to_df(get_ultrasonics_multiple(10)))
+
+
+raise Exception("End of code...")
+
+## TODO: Finish wall_align
+startup()
+
+
 
 probs = histogram.determine_probabilities_unknown_direction(None, *scan_directions())
 for p in probs:
@@ -632,76 +663,34 @@ display.register_ultrasonic(ultrasonics)
 ######################
 ### FROM NATE CODE ###
 ######################
-def align(located,selectSimmer):
+def center(selectSimmer):
     print('')
-    print('Beginning Align')
-    degreesRotated = -45
-    diagAlign = False
-    wallAlign = False
-    rotateLeft(45, selectSimmer)
-    while not diagAlign and not wallAlign:
-        readings = sensorSweep(3,selectSimmer)
-        #print(readings)
+    print('Beginning center')
+    readings = to_df(get_ultrasonics_multiple(10))
+    for i in range(len(readings)):
+        while readings[i] > 12:
+            readings[i] = readings[i] - 12
 
-        diagCheck = True
-        for i in readings:
-            if i > 10:
-                diagCheck = False
-        closeCheck = readings[0] - readings[1]
-        #print(closeCheck)
-        if closeCheck < 0:
-                closeCheck = -closeCheck
-        #print(str(closeCheck))
-        if closeCheck < 0.5 and readings[0] < 9.6 and (readings[2] > 12 or readings[3] > 12 or readings[4] > 12):
-            wallAlign = True
-        elif diagCheck:
-            diagAlign = True
-        else:
-            rotateRight(15,selectSimmer)
-            degreesRotated = degreesRotated + 15
-                    #print('Rotation Complete')
-                #else:
-                    #print('Still Rotating')
+    for j in range(len(readings)):
+        if readings[j] > 9.6:
+            readings[j] = readings[j] - 12
 
-    if diagAlign:
-        print('Diagonally Aligned')
-    else:
-        print('Wall Aligned')
+    fbDifference = ((readings[0]+readings[1])/2) - readings[4]
+    lrDifference = readings[2] - readings[3]
 
-    print('Degrees Rotated: '+str(degreesRotated))
+    #print(str(fbDifference) + ',' + str(lrDifference))
+    if fbDifference > 0 and (readings[0] < 3.5 or readings[1] < 3.5):
+        fbDifference = 0
 
-    if located:
-        if wallAlign:
-            lockList = [0-degreesRotated, 90-degreesRotated, 180-degreesRotated, 270-degreesRotated, 360-degreesRotated]
-            turnList = [0,-90,-180,-270,0]
-        else:
-            lockList = [-45-degreesRotated,45-degreesRotated, 135-degreesRotated, 225-degreesRotated, 315-degreesRotated, 405-degreesRotated]
-            turnList = [45,-45,-135,-225,-315,-45]
-        for k in range(len(lockList)):
-            if lockList[k] < 0:
-                lockList[k] = -lockList[k]
-        #print(lockList)
-        minLockListIndex = lockList.index(min(lockList))
-        realignRotate = turnList[minLockListIndex]
-        #print('r0-'+str(realignRotate))
-        print('Rotating back: '+str(realignRotate))
-        rotateRight(realignRotate, selectSimmer)
-                #print('Rotation Complete')
-            #else:
-                #print('Still Rotating')
+    if fbDifference < 0 and readings[4] < 3.5:
+        fbDifference = 0
 
-    else:
-        if diagAlign:
-            rotateLeft(45, selectSimmer)
-                    #print('Rotation Complete')
-                #else:
-                    #print('Still Rotating')
+    if lrDifference > 0 and readings[2] < 3.5:
+        lrDifference = 0
 
-        readings = sensorSweep(1, selectSimmer)
-        if readings[0] < 12:
-            rotateRight(90, selectSimmer)
-                    #print('Rotation Complete')
-                #else:
-                    #print('Still Rotating')
+    if lrDifference < 0 and readings[3] < 3.5:
+        lrDifference = 0
 
-    return()
+    moveForward(fbDifference/2, selectSimmer)
+    if selectSimmer:
+        moveRight(lrDifference/2, selectSimmer)

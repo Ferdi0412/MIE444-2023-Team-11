@@ -83,8 +83,8 @@ def _generate_maze(resolution, distance_threshold):
                 maze[row-1, col-1] = tuple([-1, -1, -1, -1,])
                 continue
 
-            east  = min( _np.argmax( WALLS[row, col-1 :: -1] ), distance_threshold )
-            west  = min( _np.argmax( WALLS[row, col+1 :    ] ), distance_threshold )
+            west  = min( _np.argmax( WALLS[row, col-1 :: -1] ), distance_threshold )
+            east  = min( _np.argmax( WALLS[row, col+1 :    ] ), distance_threshold )
             north = min( _np.argmax( WALLS[row-1 :: -1, col] ), distance_threshold )
             south = min( _np.argmax( WALLS[row+1 :,     col] ), distance_threshold )
 
@@ -173,14 +173,30 @@ def rotate_90_prob_sets(prob_sets, times: int = 1) -> tuple:
 
 
 
-def draw(probabilities: _np.array) -> None:
+def draw_clear() -> None:
+    plt.close()
+
+
+
+def draw(probabilities: _np.array, *, title: str = None) -> None:
     """Display a probabilities plot."""
     if probabilities is _INVALID_DIRECTION:
         probabilities = _np.zeros(MAZE.shape)
     plt.close()
     plt.matshow(probabilities)
+    if title:
+        plt.title(title)
     plt.draw()
     plt.pause(0.001)
+
+
+
+def draw_set( prob_set: tuple[_np.array] ) -> None:
+    for i, p in enumerate(prob_set):
+        if is_valid_prob(p):
+            draw(p, title=DIRECTIONS[i])
+            input("[Enter] to continue")
+    print("Done drawing plots...")
 
 
 
@@ -194,7 +210,7 @@ def get_locations(probabilities: _np.array) -> list[tuple[float, float]]:
 
 
 
-def determine_probabilities(probabilities: _np.array, north_blocks, east_blocks, south_blocks, west_blocks):
+def determine_probabilities(probabilities: _np.array, north_blocks, east_blocks, south_blocks, west_blocks, *, enable_INVALID=False):
     """If facing NORTH, right becomes EAST."""
     if probabilities is None:
         probabilities = _np.ones( MAZE.shape )
@@ -205,6 +221,10 @@ def determine_probabilities(probabilities: _np.array, north_blocks, east_blocks,
                                               min(east_blocks,  DISTANCE_THRESHOLD),
                                               min(south_blocks, DISTANCE_THRESHOLD),
                                               min(west_blocks,  DISTANCE_THRESHOLD)]) ) ] = P_HIT
+
+    if enable_INVALID:
+        if _np.sum(_np.where(p_update == P_HIT)) == 0:
+            return _INVALID_DIRECTION
 
     #p_update[ MAZE == 0 ] = 0
 
@@ -223,24 +243,35 @@ def apply_movement_filter(x_steps: int, y_steps: int, probabilities: _np.array, 
     """
     ## Move rightwards/leftwards (across columns)
     if x_steps > 0:
-        probabilities[:, x_steps:] = probabilities[:, :-x_steps]
-        probabilities[:, :x_steps] = 0
+        for _ in range(x_steps):
+            probabilities[:, 1:] = probabilities[:, :-1]
+            probabilities[:, :1] = 0
+            if not ignore_kernel:
+                probabilities = convolve2d(probabilities, KERNEL, 'same')
 
     elif x_steps < 0:
-        probabilities[:, :x_steps] = probabilities[:, (-x_steps):]
-        probabilities[:, x_steps:] = 0
+        for _ in range(-x_steps):
+            probabilities[:, :-1] = probabilities[:, 1:]
+            probabilities[:, -1:] = 0
+            if not ignore_kernel:
+                probabilities = convolve2d(probabilities, KERNEL, 'same')
 
     ## Move upwards/downwards (across rows)
     if y_steps > 0:
-        probabilities[y_steps:, :] = probabilities[:-y_steps, :]
-        probabilities[:y_steps, :] = 0
+        for _ in range(y_steps):
+            probabilities[1:, :] = probabilities[:-1, :]
+            probabilities[:1, :] = 0
+            if not ignore_kernel:
+                probabilities = convolve2d(probabilities, KERNEL, 'same')
 
     elif y_steps < 0:
-        probabilities[:y_steps, :] = probabilities[(-y_steps):, :]
-        probabilities[y_steps:, :] = 0
+        for _ in range(-y_steps):
+            probabilities[:-1, :] = probabilities[1:, :]
+            probabilities[-1:, :] = 0
+            if not ignore_kernel:
+                probabilities = convolve2d(probabilities, KERNEL, 'same')
 
-    if not ignore_kernel:
-        probabilities = convolve2d(probabilities, KERNEL, 'same')
+
 
     probabilities[ _search_for_tuple( MAZE, tuple([-1, -1, -1, -1]) ) ] = 0
 
@@ -254,7 +285,7 @@ def apply_movement_filter(x_steps: int, y_steps: int, probabilities: _np.array, 
 def _determine_probabilities(probabilities: _np.array, north_blocks, east_blocks, south_blocks, west_blocks) -> _np.ndarray:
     """Runs determine_probabilities only if input is not _INVALID_DIRECTION"""
     if probabilities is not _INVALID_DIRECTION:
-        probabilities = determine_probabilities(probabilities, north_blocks, east_blocks, south_blocks, west_blocks)
+        probabilities = determine_probabilities(probabilities, north_blocks, east_blocks, south_blocks, west_blocks, enable_INVALID=True)
     return probabilities
 
 
@@ -269,9 +300,14 @@ def _valid_probs_check(probabilities: _np.array) -> _np.array:
 
 
 
+def is_valid_prob(probabilities: _np.array) -> bool:
+    """Checks if probabilities is possible."""
+    return probabilities is not _INVALID_DIRECTION
+
+
+
 def limit_dist(distance):
     return min(DISTANCE_THRESHOLD, distance // RESOLUTION)
-
 
 
 def scale(distance):
@@ -284,10 +320,11 @@ def determine_probabilities_unknown_direction(probability_sets, fwd_blocks, righ
     if probability_sets is None:
         probability_sets = (None, None, None, None)
     fwd_blocks, right_blocks, back_blocks, left_blocks = limit_dist(fwd_blocks), limit_dist(right_blocks), limit_dist(back_blocks), limit_dist(left_blocks)
-    north_facing_p  = _valid_probs_check(_determine_probabilities(probability_sets[0], fwd_blocks, right_blocks, back_blocks, left_blocks))
-    east_facing_p   = _valid_probs_check(_determine_probabilities(probability_sets[1], left_blocks, fwd_blocks, right_blocks, back_blocks))
-    south_facing_p  = _valid_probs_check(_determine_probabilities(probability_sets[2], back_blocks, left_blocks, fwd_blocks, right_blocks))
-    west_facing_p   = _valid_probs_check(_determine_probabilities(probability_sets[3], right_blocks, back_blocks, left_blocks, fwd_blocks))
+    directions = (fwd_blocks, right_blocks, back_blocks, left_blocks)
+    north_facing_p  = _valid_probs_check(_determine_probabilities(probability_sets[0], *directions))
+    east_facing_p   = _valid_probs_check(_determine_probabilities(probability_sets[1], *rotate_90(*directions, 1)))
+    south_facing_p  = _valid_probs_check(_determine_probabilities(probability_sets[2], *rotate_90(*directions, 2)))
+    west_facing_p   = _valid_probs_check(_determine_probabilities(probability_sets[3], *rotate_90(*directions, 3)))
     return (north_facing_p, east_facing_p, south_facing_p, west_facing_p)
 
 
@@ -300,7 +337,8 @@ def _move_robot_direction(prob, moves_north, moves_east):
 
 
 
-def apply_movement_filter_unknown_direction(probability_sets, moves_fwd, moves_right):
+def apply_movement_filter_unknown_direction(probability_sets, moves_fwd, moves_right, rotates: int = 0):
+    probability_sets = rotate_90(*probability_sets, rotates)
     north_facing_p = _move_robot_direction(probability_sets[0], moves_fwd, moves_right)
     east_facing_p  = _move_robot_direction(probability_sets[1], -moves_right, moves_fwd)
     south_facing_p = _move_robot_direction(probability_sets[2], -moves_fwd, -moves_right)
@@ -310,14 +348,14 @@ def apply_movement_filter_unknown_direction(probability_sets, moves_fwd, moves_r
 
 
 
-def determine_directions(probability_sets) -> tuple[bool, bool, bool, bool]:
+def determine_direction(probability_sets) -> int | None:
     """Returns boolean direction flags."""
     (north_p, east_p, south_p, west_p) = probability_sets
-    north_facing = _valid_probs_check(north_p) is not _INVALID_DIRECTION
-    east_facing  = _valid_probs_check(east_p)  is not _INVALID_DIRECTION
-    south_facing = _valid_probs_check(south_p) is not _INVALID_DIRECTION
-    west_facing  = _valid_probs_check(west_p)  is not _INVALID_DIRECTION
-    return (north_facing, east_facing, south_facing, west_facing)
+    north_facing = _valid_probs_check(north_p) is not _INVALID_DIRECTION and len(get_locations(north_p)) == 1
+    east_facing  = _valid_probs_check(east_p)  is not _INVALID_DIRECTION and len(get_locations(east_p))  == 1
+    south_facing = _valid_probs_check(south_p) is not _INVALID_DIRECTION and len(get_locations(south_p)) == 1
+    west_facing  = _valid_probs_check(west_p)  is not _INVALID_DIRECTION and len(get_locations(west_p))  == 1
+    return _np.argmax([north_facing, east_facing, south_facing, west_facing]) if (sum([north_facing, east_facing, south_facing, west_facing]) == 1) else None
 
 
 
