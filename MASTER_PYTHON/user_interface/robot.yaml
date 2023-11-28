@@ -14,17 +14,21 @@ ultrasonic:
     location: [0, -3.2] # -2.7
     rotation: 180
 
-  R:
-    location: [3.5, 0]
-    rotation: 90
-
-  FL:
+  FR:
     location: [-2.6, -2]
     rotation: 270
 
+  BR:
+    location: [-2.6,  2]
+    rotation: 270
+
+  FL:
+    location: [2.6, -2]
+    rotation: 90
+
   BL:
-    location: [-2.6, 2]
-    rotation: 315
+    location: [2.6, 2]
+    rotation: 90
 
   B:
     location: [0, 3.2]

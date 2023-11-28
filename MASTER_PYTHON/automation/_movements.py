@@ -169,6 +169,9 @@ def room_detector(robot):
     print(f"[room_detector] -> Room type: {room_type}")
     return sensor_readings, room_type
 
-def find_new_locations_first(robot, location_list)
+def find_new_locations_first(robot, location_list):
+    pass
+
 
 def find_new_locations(robot, location_list, maze, room_type, step_one):
+    pass
