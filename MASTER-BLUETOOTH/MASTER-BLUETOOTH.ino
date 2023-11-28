@@ -38,6 +38,30 @@ void buffered_send(Stream &stream_in, Stream &stream_out) {
   }
 }
 
+
+// Buffer then send function passing messages ending in '\n'
+void buffered_newline_send(Stream &stream_in, Stream &stream_out) {
+  unsigned int bytes_available;
+
+  bytes_available = stream_in.available();
+  
+  while ( bytes_available ) {
+    #ifdef LED_ON_MSG
+      time_off = millis() + LED_MS_ON;
+      digitalWrite(LED, HIGH);
+    #endif
+
+    size_t bytes_to_send = stream_in.readBytesUntil('\n', buffer, BUFFER_LEN - 1);
+
+    buffer[bytes_to_send] = '\n';
+
+    stream_out.write(buffer, bytes_to_send + 1);
+
+    bytes_available = stream_in.available();
+  }
+}
+
+
 // SETUP
 void setup() {
   ComputerBT.begin("Team-11-Robot");
@@ -56,5 +80,5 @@ void loop() {
   #endif
 
   buffered_send(ComputerBT, RobotSerial);
-  buffered_send(RobotSerial, ComputerBT);
+  buffered_newline_send(RobotSerial, ComputerBT);
 }
