@@ -49,10 +49,10 @@ def encode_backwards(dist: float = None) -> bytes:
     return b"S" + ((_config.DATA_PREFIX + _encode_int(dist * _config.TIME_TO_DIST + _config.TIME_OFFSET)) if dist is not None else b"")
 
 def encode_clockwise(angle: float = None) -> bytes:
-    return b"E" + ((_config.DATA_PREFIX + _encode_int(angle * _config.TIME_TO_ANGLE + _config.TIME_OFFSET)) if angle is not None else b"")
+    return b"E" + ((_config.DATA_PREFIX + _encode_int(angle * _config.TIME_TO_ANGLE + _config.TIME_ANGLE_OFFSET)) if angle is not None else b"")
 
 def encode_counter_clockwise(angle: float) -> bytes:
-    return b"Q" + ((_config.DATA_PREFIX + _encode_int(angle * _config.TIME_TO_ANGLE + _config.TIME_OFFSET)) if angle is not None else b"")
+    return b"Q" + ((_config.DATA_PREFIX + _encode_int(angle * _config.TIME_TO_ANGLE + _config.TIME_ANGLE_OFFSET)) if angle is not None else b"")
 
 def encode_stop() -> bytes:
     return b"X"

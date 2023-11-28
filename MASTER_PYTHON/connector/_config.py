@@ -14,12 +14,14 @@ ULTR_PREFIX = b'U_'
 
 DATA_PREFIX = b'~'
 
-TIME_OFFSET   = 80
-TIME_TO_DIST  = 10000 / 73 * 1 / 5 * 4
-TIME_TO_ANGLE = 40 / 2.85 / 1.37
+TIME_OFFSET       = 80
+TIME_TO_DIST      = 10000 / 73 * 1 / 5 * 4
+TIME_ANGLE_OFFSET = 125
+TIME_TO_ANGLE     = 40 / 2.85 / 1.37 / 1.45 * 7.2 / 6 * 90 / 110
 
-ULTR_LOOKUP = {"0": "F",
-               "1": "R",
-               "2": "B",
-               "3": "BL",
-               "4": "BR",}
+# ULTR_LOOKUP = {"0": "F",
+#                "1": "FR",
+#                "2": "BR",
+#                "3": "B",
+#                "4": "BL",
+#                "5": "BR",}
