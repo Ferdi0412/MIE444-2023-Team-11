@@ -14,8 +14,8 @@ ULTR_PREFIX = b'U_'
 
 DATA_PREFIX = b'~'
 
-TIME_OFFSET       = 125 # 80
-TIME_TO_DIST      = 10000 / 73 * 1 / 5 * 4
+TIME_OFFSET       = 108
+TIME_TO_DIST      = 10000 / 73 * 1 / 5 * 4 / 13 * 12
 TIME_ANGLE_OFFSET = 145
 TIME_TO_ANGLE     = 40 / 2.85 / 1.37 / 1.45 * 7.2 / 6 * 90 / 110
 
