@@ -49,19 +49,16 @@ robot_start_rotation = 180      # Robot starting rotation (deg)
 robot_width = 6                 # Robot width in inches
 robot_height = 6                # Robot height in inches
 robot_outline = [               # Robot outline, relative to center position
-                pm.Vector2(1.24, 3),
-                pm.Vector2(3,  1.24),
-                pm.Vector2(4.5, 1.24),
-                pm.Vector2(4.5, -1.24),
-                pm.Vector2(3, -1.24),
-                pm.Vector2(1.24, -3),
-                pm.Vector2(-1.24, -3),
-                pm.Vector2(-3, -1.24),
-                pm.Vector2(-4.5, -1.24),
-                pm.Vector2(-4.5, 1.24),
-                pm.Vector2(-3,  1.24),
-                pm.Vector2(-1.24, 3)
-                ]
+    pm.Vector2(v) for v in [[-4, -1.24],
+                            [-2.24, -3],
+                            [ 2.24, -3],
+                            [ 4, -1.24],
+                            [ 4,  1.24],
+                            [ 2.24,  3],
+                            [-2.24,  3],
+                            [-4,  1.24],
+                            [-4, -1.24]]
+    ]
 
 # Maze definition information
 wall_segment_length = 12    # Length of maze wall segments (inches)
@@ -158,9 +155,9 @@ drives = {
 }
 
 # Sensors
-u1_info = {
-    'id': 'u1',
-    'position': [-1.2, 2.58],
+u0_info = {
+    'id': 'u0',
+    'position': [0, 3.2],
     'height': 2,
     'rotation': 0,
     'error': 0.02,
@@ -174,11 +171,27 @@ u1_info = {
     'visible_measurement': True
 }
 
+u1_info = {
+    'id': 'u1',
+    'position': [0, -3.2],
+    'height': 2,
+    'rotation': 180,
+    'error': 0.02,
+    'outline': [
+        pm.Vector2(-1, -0.5),
+        pm.Vector2(-1, 0.5),
+        pm.Vector2(1, 0.5),
+        pm.Vector2(1, -0.5)
+    ],
+    'visible': True,
+    'visible_measurement': True
+}
+
 u2_info = {
     'id': 'u2',
-    'position': [1.2, 2.58],
+    'position': [2.6, -2],
     'height': 4,
-    'rotation': 0,
+    'rotation': 270,
     'error': 0.02,
     'outline': [
         pm.Vector2(-1, -0.5),
@@ -191,8 +204,8 @@ u2_info = {
 }
 
 u3_info = {
-    'id': 'u3',
-    'position': [2.97, 0],
+    'id': 'u2',
+    'position': [2.6, 2],
     'height': 4,
     'rotation': 270,
     'error': 0.02,
@@ -208,23 +221,7 @@ u3_info = {
 
 u4_info = {
     'id': 'u4',
-    'position': [0, -2.97],
-    'height': 4,
-    'rotation': 180,
-    'error': 0.02,
-    'outline': [
-        pm.Vector2(-1, -0.5),
-        pm.Vector2(-1, 0.5),
-        pm.Vector2(1, 0.5),
-        pm.Vector2(1, -0.5)
-    ],
-    'visible': True,
-    'visible_measurement': True
-}
-
-u5_info = {
-    'id': 'u5',
-    'position': [-2.97, 0],
+    'position': [-2.6, 2],
     'height': 4,
     'rotation': 90,
     'error': 0.02,
@@ -238,7 +235,40 @@ u5_info = {
     'visible_measurement': True
 }
 
+u5_info = {
+    'id': 'u5',
+    'position': [-2.6, -2],
+    'height': 4,
+    'rotation': 90,
+    'error': 0.02,
+    'outline': [
+        pm.Vector2(-1, -0.5),
+        pm.Vector2(-1, 0.5),
+        pm.Vector2(1, 0.5),
+        pm.Vector2(1, -0.5)
+    ],
+    'visible': True,
+    'visible_measurement': True
+}
+
+# u5_info = {
+#     'id': 'u5',
+#     'position': [-2.6, 0],
+#     'height': 4,
+#     'rotation': 90,
+#     'error': 0.02,
+#     'outline': [
+#         pm.Vector2(-1, -0.5),
+#         pm.Vector2(-1, 0.5),
+#         pm.Vector2(1, 0.5),
+#         pm.Vector2(1, -0.5)
+#     ],
+#     'visible': True,
+#     'visible_measurement': True
+# }
+
 sensors = {
+    'u0': Ultrasonic(u0_info),
     'u1': Ultrasonic(u1_info),
     'u2': Ultrasonic(u2_info),
     'u3': Ultrasonic(u3_info),
@@ -249,4 +279,4 @@ sensors = {
 
 
 ### TESTING AND DEBUG SETTINGS ###
-simulate_list = ['u1', 'u2', 'u3', 'u4', 'u5']
+simulate_list = ['u0', 'u1', 'u2', 'u3', 'u4', 'u5']
